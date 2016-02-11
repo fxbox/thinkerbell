@@ -118,7 +118,7 @@ struct Conjunction<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
 /// A condition is true if *any* of the sensors allocated to this
 /// requirement has yielded a value that is in the given range.
 struct Condition<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
-    input: Ctx::Input, // FIXME: Well, is this a single device or many?
+    input: Ctx::InputSet, // FIXME: Well, is this a single device or many?
     capability: Dev::InputCapability,
     range: Range,
     state: Ctx::ConditionState,
@@ -129,7 +129,7 @@ struct Condition<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
 struct Statement<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
     /// The resource to which this command applies.  e.g. "all
     /// heaters", "a single communication channel", etc.
-    destination: Ctx::Output,
+    destination: Ctx::OutputSet,
 
     /// The action to execute on the resource.
     action: Dev::OutputCapability,
@@ -156,6 +156,18 @@ enum Expression<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
 
     /// More than a single value.
     Vec(Vec<Expression<Ctx, Dev>>)
+}
+
+/// A manner of representing internal nodes.
+pub trait Context {
+    /// A representation of one or more input devices.
+    type InputSet;
+
+    /// A representation of one or more output devices.
+    type OutputSet;
+
+    /// A representation of the current state of a condition.
+    type ConditionState;
 }
 
 ///
@@ -433,11 +445,11 @@ trait Rebinder {
         <<Self as Rebinder>::DestDev as DeviceAccess>::OutputCapability;
 
     // Recinding the context
-    fn rebind_input(&self, &<<Self as Rebinder>::SourceCtx as Context>::Input) ->
-        <<Self as Rebinder>::DestCtx as Context>::Input;
+    fn rebind_input(&self, &<<Self as Rebinder>::SourceCtx as Context>::InputSet) ->
+        <<Self as Rebinder>::DestCtx as Context>::InputSet;
 
-    fn rebind_output(&self, &<<Self as Rebinder>::SourceCtx as Context>::Output) ->
-        <<Self as Rebinder>::DestCtx as Context>::Output;
+    fn rebind_output(&self, &<<Self as Rebinder>::SourceCtx as Context>::OutputSet) ->
+        <<Self as Rebinder>::DestCtx as Context>::OutputSet;
 
     fn rebind_condition(&self, &<<Self as Rebinder>::SourceCtx as Context>::ConditionState) ->
         <<Self as Rebinder>::DestCtx as Context>::ConditionState;
@@ -554,18 +566,27 @@ impl<Ctx, Dev> Expression<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
 ///
 /// # Precompilation
 ///
-pub trait Context {
-    type Input;
-    type Output;
-    type ConditionState;
-}
+
+/// A Context used to represent a script that hasn't been compiled
+/// yet. Rather than pointing to specific device + capability, inputs
+/// and outputs are numbers that are meaningful only in the AST.
 struct UncheckedCtx;
 impl Context for UncheckedCtx {
-    type Input = usize;
-    type Output = usize;
+    /// In this implementation, each input is represented by its index
+    /// in the array of allocations.
+    type InputSet = usize;
+
+    /// In this implementation, each output is represented by its
+    /// index in the array of allocations.
+    type OutputSet = usize;
+
+    /// In this implementation, conditions have no state.
     type ConditionState = ();
 }
 
+/// A DeviceAccess used to represent a script that hasn't been
+/// compiled yet. Rather than having typed devices, capabilities,
+/// etc. everything is represented by a string.
 struct UncheckedDev;
 impl DeviceAccess for UncheckedDev {
     type Device = String;

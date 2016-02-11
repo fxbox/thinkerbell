@@ -413,8 +413,14 @@ trait Rebinder {
     type DestEnv: Environment;
     fn alloc_input(&self, &<<Self as Rebinder>::SourceEnv as Environment>::Input) ->
         <<Self as Rebinder>::DestEnv as Environment>::Input;
+    fn alloc_input_capability(&self, &<<Self as Rebinder>::SourceEnv as Environment>::InputCapability) ->
+        <<Self as Rebinder>::DestEnv as Environment>::InputCapability;
+
     fn alloc_output(&self, &<<Self as Rebinder>::SourceEnv as Environment>::Output) ->
         <<Self as Rebinder>::DestEnv as Environment>::Output;
+    fn alloc_output_capability(&self, &<<Self as Rebinder>::SourceEnv as Environment>::OutputCapability) ->
+        <<Self as Rebinder>::DestEnv as Environment>::OutputCapability;
+
     fn alloc_condition(&self, &<<Self as Rebinder>::SourceEnv as Environment>::ConditionState) ->
         <<Self as Rebinder>::DestEnv as Environment>::ConditionState;
 }
@@ -469,6 +475,7 @@ impl<Env> Conjunction<Env> where Env: Environment {
         }
     }
 }
+ */
 
 impl<Env> Condition<Env> where Env: Environment {
     fn rebind<R>(&self, rebinder: &R) -> Condition<R::DestEnv>
@@ -476,12 +483,13 @@ impl<Env> Condition<Env> where Env: Environment {
     {
         Condition {
             range: self.range.clone(),
-            capability: self.capability.clone(),
-            input: rebinder.alloc_input(&self.input).clone(),
+            capability: rebinder.alloc_input_capability(&self.capability),
+            input: rebinder.alloc_input(&self.input),
             state: rebinder.alloc_condition(&self.state),
         }
     }
 }
+
 
 impl<Env> Statement<Env> where Env: Environment {
     fn rebind<R>(&self, rebinder: &R) -> Statement<R::DestEnv>
@@ -491,14 +499,13 @@ impl<Env> Statement<Env> where Env: Environment {
                 (key.clone(), value.rebind(rebinder))
             }).collect();
             Statement {
-                destination: rebinder.alloc_output(&self.destination).clone(),
-                action: self.action.clone(),
+                destination: rebinder.alloc_output(&self.destination),
+                action: rebinder.alloc_output_capability(&self.action),
                 arguments: arguments
             }
         }
 }
 
- */
 
 impl<Env> Expression<Env> where Env: Environment {
     fn rebind<R>(&self, rebinder: &R) -> Expression<R::DestEnv>

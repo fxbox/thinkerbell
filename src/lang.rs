@@ -355,22 +355,22 @@ impl<Ctx, Dev> Conjunction<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
         }
     }
 }
+ */
 
-impl<Ctx, Dev> Condition<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
+impl<Dev> Condition<CompiledCtx<Dev>, Dev> where Dev: DeviceAccess {
     /// Determine if one of the devices serving as input for this
     /// condition meets the condition.
     fn is_met(&mut self) -> IsMet {
-        let &mut is_met = Dev::condition_is_met(&mut self.state);
-        let old = is_met;
+        let old = self.state.is_met;
         let mut new = false;
-        for single in Dev::get_inputs(&mut self.input) {
+        for single in &*self.input {
             // This will fail only if the thread has already panicked.
             let state = single.state.read().unwrap();
             let is_met = match *state {
                 None => { false /* We haven't received a measurement yet.*/ },
                 Some(ref data) => {
-                    use dependencies::Range::*;
-                    use dependencies::Value::*;
+                    use values::Range::*;
+                    use values::Value::*;
 
                     match (&data.data, &self.range) {
                         // Any always matches
@@ -410,7 +410,7 @@ impl<Ctx, Dev> Condition<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
         }
     }
 }
-*/
+
 
 #[derive(Debug)]
 pub enum SourceError {
@@ -665,9 +665,12 @@ struct CompiledOutput<Dev> where Dev: DeviceAccess {
 
 type CompiledInputSet<Dev> = Arc<Vec<Arc<CompiledInput<Dev>>>>;
 type CompiledOutputSet<Dev> = Arc<Vec<Arc<CompiledOutput<Dev>>>>;
+struct CompiledConditionState {
+    is_met: bool
+}
 
 impl<Dev> Context for CompiledCtx<Dev> where Dev: DeviceAccess {
-    type ConditionState = bool;
+    type ConditionState = CompiledConditionState; // FIXME: We could share this
     type OutputSet = CompiledOutputSet<Dev>;
     type InputSet = CompiledInputSet<Dev>;
 }
@@ -849,7 +852,9 @@ impl<'a, Dev> Rebinder for Precompiler<'a, Dev>
         Result<<<Self as Rebinder>::DestCtx as Context>::ConditionState, Error>
     {
         // By default, conditions are not met.
-        Ok(false)
+        Ok(CompiledConditionState {
+            is_met: false
+        })
     }
 
     fn rebind_input(&self, index: &<<Self as Rebinder>::SourceCtx as Context>::InputSet) ->

@@ -12,7 +12,7 @@
 use dependencies::{Environment, DeviceKind, InputCapability, OutputCapability, Device, Range, Value, Watcher};
 
 use std::collections::HashMap;
-use std::sync::{Arc, RwLock}; // FIXME: Investigate if we really need so many instances of Arc.
+use std::sync::{Arc, RwLock}; // FIXME: Investigate if we really need so many instances of Arc. I suspect that most can be replaced by &'a.
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::marker::PhantomData;
 
@@ -162,7 +162,7 @@ enum Expression<Env> where Env: Environment {
 
 /// A script ready to be executed.
 /// Each script is meant to be executed in an individual thread.
-struct ExecutionTask<Env> where Env: ExecutionEnvironment {
+struct ExecutionTask<Env> where Env: Environment {
     /// The current state of execution the script.
     state: Script<Env>,
 
@@ -171,6 +171,9 @@ struct ExecutionTask<Env> where Env: ExecutionEnvironment {
     rx: Receiver<ExecutionOp>,
 }
 
+
+
+/*
 trait ExecInput {
 }
 
@@ -180,7 +183,7 @@ trait ExecutionEnvironment: Environment {
 
     fn get_inputs<'a>(input: &'a mut <Self as Environment>::Input) -> &'a mut Vec<<Self as ExecutionEnvironment>::ExecInput>;
 }
-
+*/
 struct IsMet {
     old: bool,
     new: bool,
@@ -197,7 +200,7 @@ enum ExecutionOp {
 }
 
 
-impl<Env> ExecutionTask<Env> where Env: ExecutionEnvironment {
+impl<Env> ExecutionTask<Env> where Env: Environment {
     /// Create a new execution task.
     ///
     /// The caller is responsible for spawning a new thread and
@@ -321,13 +324,13 @@ impl<Env> ExecutionTask<Env> where Env: ExecutionEnvironment {
 /// # Evaluating conditions
 ///
 /*
-impl<Env> Trigger<Env> where Env: ExecutionEnvironment {
+impl<Env> Trigger<Env> where Env: Environment {
     fn is_met(&mut self) -> IsMet {
         self.condition.is_met()
     }
 }
 
-impl<Env> Conjunction<Env> where Env: ExecutionEnvironment {
+impl<Env> Conjunction<Env> where Env: Environment {
     /// For a conjunction to be true, all its components must be true.
     fn is_met(&mut self) -> IsMet {
         let &mut is_met = Env::condition_is_met(&mut self.state);
@@ -349,7 +352,7 @@ impl<Env> Conjunction<Env> where Env: ExecutionEnvironment {
     }
 }
 
-impl<Env> Condition<Env> where Env: ExecutionEnvironment {
+impl<Env> Condition<Env> where Env: Environment {
     /// Determine if one of the devices serving as input for this
     /// condition meets the condition.
     fn is_met(&mut self) -> IsMet {
@@ -404,10 +407,13 @@ impl<Env> Condition<Env> where Env: ExecutionEnvironment {
     }
 }
 */
-///
-/// # Changing the kind of variable used.
-///
 
+/// Rebind a script from an environment to another one.
+///
+/// This is typically used as a compilation step, to turn code in
+/// which device kinds, device allocations, etc. are represented as
+/// strings or numbers into code in which they are represented by
+/// concrete data structures.
 trait Rebinder {
     type SourceEnv: Environment;
     type DestEnv: Environment;
@@ -542,8 +548,6 @@ impl<Env> Expression<Env> where Env: Environment {
 ///
 
 struct UncheckedEnv;
-//struct CompiledEnv;
-
 impl Environment for UncheckedEnv {
     type Input = usize;
     type Output = usize;
@@ -553,6 +557,22 @@ impl Environment for UncheckedEnv {
     type InputCapability = InputCapability; // FIXME: String?
     type OutputCapability = OutputCapability; // FIXME: String?
     type Watcher = FakeWatcher;
+}
+
+struct CompiledEnv<Env> {
+    phantom: PhantomData<Env>,
+}
+
+impl<Env> Environment for CompiledEnv<Env> where Env: Environment {
+    type Input = Env::Input;
+    type Output = Env::Output;
+    type Device = Env::Device;
+    type DeviceKind = Env::DeviceKind;
+    type InputCapability = Env::InputCapability;
+    type OutputCapability = Env::OutputCapability;
+    type Watcher = Env::Watcher;
+
+    type ConditionState = bool;
 }
 
 struct FakeWatcher;
@@ -618,7 +638,7 @@ struct Precompiler<'a, CompiledEnv> {
     phantom: PhantomData<CompiledEnv>,
 }
 
-impl<'a, DestEnv> Precompiler<'a, DestEnv> where DestEnv: ExecutionEnvironment {
+impl<'a, DestEnv> Precompiler<'a, DestEnv> where DestEnv: Environment {
     fn new(source: &'a Script<UncheckedEnv>) -> Self {
         Precompiler {
             script: source,
@@ -629,7 +649,7 @@ impl<'a, DestEnv> Precompiler<'a, DestEnv> where DestEnv: ExecutionEnvironment {
 
 /*
 impl<'a, DestEnv> Rebinder for Precompiler<'a, DestEnv>
-    where DestEnv: ExecutionEnvironment {
+    where DestEnv: Environment {
     type DestEnv = DestEnv;
     type SourceEnv = UncheckedEnv;
 
@@ -669,7 +689,7 @@ impl<'a, DestEnv> Rebinder for Precompiler<'a, DestEnv>
         }
     }
 }
- */
+*/
 /*
 impl Script {
     ///

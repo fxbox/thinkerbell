@@ -50,6 +50,7 @@ pub struct Script<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
     requirements: Vec<Arc<Requirement<Ctx, Dev>>>,
 
     /// Resources actually allocated for each requirement.
+    /// This must have the same size as `requirements`.
     allocations: Vec<Resource<Ctx, Dev>>,
 
     /// A set of rules, stating what must be done in which circumstance.
@@ -118,7 +119,7 @@ struct Conjunction<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
 /// A condition is true if *any* of the sensors allocated to this
 /// requirement has yielded a value that is in the given range.
 struct Condition<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
-    input: Ctx::InputSet, // FIXME: Well, is this a single device or many?
+    input: Ctx::InputSet,
     capability: Dev::InputCapability,
     range: Range,
     state: Ctx::ConditionState,
@@ -423,7 +424,7 @@ trait Rebinder {
     type SourceDev: DeviceAccess;
     type DestDev: DeviceAccess;
 
-    // Rebinding the environment
+    // Rebinding the device access
     fn rebind_device(&self, &<<Self as Rebinder>::SourceDev as DeviceAccess>::Device) ->
         <<Self as Rebinder>::DestDev as DeviceAccess>::Device;
     fn rebind_device_kind(&self, &<<Self as Rebinder>::SourceDev as DeviceAccess>::DeviceKind) ->
@@ -433,7 +434,7 @@ trait Rebinder {
     fn rebind_output_capability(&self, &<<Self as Rebinder>::SourceDev as DeviceAccess>::OutputCapability) ->
         <<Self as Rebinder>::DestDev as DeviceAccess>::OutputCapability;
 
-    // Recinding the context
+    // Rebinding the context
     fn rebind_input(&self, &<<Self as Rebinder>::SourceCtx as Context>::InputSet) ->
         <<Self as Rebinder>::DestCtx as Context>::InputSet;
 
@@ -585,17 +586,28 @@ impl DeviceAccess for UncheckedDev {
     type Watcher = FakeWatcher;
 }
 
-struct CompiledDev<Ctx, Dev> {
-    phantom: PhantomData<(Ctx, Dev)>,
+struct CompiledCtx<DeviceAccess> {
+    phantom: PhantomData<DeviceAccess>,
 }
 
-impl<Ctx, Dev> DeviceAccess for CompiledDev<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
-    type Device = Dev::Device;
-    type DeviceKind = Dev::DeviceKind;
-    type InputCapability = Dev::InputCapability;
-    type OutputCapability = Dev::OutputCapability;
-    type Watcher = Dev::Watcher;
+struct CompiledInput<Dev> where Dev: DeviceAccess {
+    device: Dev::Device,
+    state: RwLock<Option<DatedData>>,
 }
+
+struct CompiledOutput<Dev> where Dev: DeviceAccess {
+    device: Dev::Device,
+}
+
+type CompiledInputSet<Dev> = Arc<Vec<Arc<CompiledInput<Dev>>>>;
+type CompiledOutputSet<Dev> = Arc<Vec<Arc<CompiledOutput<Dev>>>>;
+
+impl<Dev> Context for CompiledCtx<Dev> where Dev: DeviceAccess {
+    type ConditionState = bool;
+    type OutputSet = CompiledOutputSet<Dev>;
+    type InputSet = CompiledInputSet<Dev>;
+}
+
 
 struct FakeWatcher;
 impl Watcher for FakeWatcher {
@@ -638,80 +650,91 @@ struct DatedData {
     data: Value,
 }
 
-/// A single input device, ready to use, with its latest known state.
-struct SingleInputDev {
-    device: Device,
-    state: RwLock<Option<DatedData>>
-}
-type InputDev = Vec<SingleInputDev>;
-
-/// A single output device, ready to use.
-struct SingleOutputDev {
-    device: Device
-}
-type OutputDev = Vec<SingleOutputDev>;
-
-struct ConditionDev {
-    is_met: bool
-}
-
-struct Precompiler<'a, CompiledDev> {
+struct Precompiler<'a, Dev> where Dev: DeviceAccess {
     script: &'a Script<UncheckedCtx, UncheckedDev>,
-    phantom: PhantomData<CompiledDev>,
+    inputs: Vec<Option<CompiledInputSet<Dev>>>,
+    outputs: Vec<Option<CompiledOutputSet<Dev>>>,
+    phantom: PhantomData<Dev>,
 }
 
-impl<'a, DestDev> Precompiler<'a, DestDev> where DestDev: DeviceAccess {
-    fn new(source: &'a Script<UncheckedCtx, UncheckedDev>) -> Self {
-        Precompiler {
+impl<'a, Dev> Precompiler<'a, Dev> where Dev: DeviceAccess {
+    fn new(source: &'a Script<UncheckedCtx, UncheckedDev>) -> Result<Self, ()> {
+        // Precompute allocations
+        let inputs = Vec::new();
+        let outputs = Vec::new();
+
+        // FIXME: Populate
+
+        Ok(Precompiler {
             script: source,
+            inputs: inputs,
+            outputs: outputs,
             phantom: PhantomData
-        }
+        })
     }
 }
 
-/*
-impl<'a, DestDev> Rebinder for Precompiler<'a, DestDev>
-    where DestDev: DeviceAccess, Ctx: Context {
-    type DestDev = DestDev;
-    type SourceDev = UncheckedDev;
+impl<'a, Dev> Rebinder for Precompiler<'a, Dev>
+    where Dev: DeviceAccess {
+    type SourceCtx = UncheckedCtx;
+    type DestCtx = CompiledCtx<Dev>;
 
-    fn rebind_input(&self, &input: &usize) ->
-    // Must be DestCtx::InputDev
-    // Must be parameterized by an actual implementation of Dev
+    type SourceDev = Dev;
+    type DestDev = Dev;
+
+    // Rebinding the device access. Nothing to do.
+    fn rebind_device(&self, dev: &<<Self as Rebinder>::SourceDev as DeviceAccess>::Device) ->
+        <<Self as Rebinder>::DestDev as DeviceAccess>::Device
     {
+        dev.clone()
+    }
+
+
+    fn rebind_device_kind(&self, kind: &<<Self as Rebinder>::SourceDev as DeviceAccess>::DeviceKind) ->
+        <<Self as Rebinder>::DestDev as DeviceAccess>::DeviceKind
+    {
+        (*kind).clone()
     }
     
-    fn rebind_input(&self, &input: &usize) -> DestCtx::InputDev {
-        
+    fn rebind_input_capability(&self, cap: &<<Self as Rebinder>::SourceDev as DeviceAccess>::InputCapability) ->
+        <<Self as Rebinder>::DestDev as DeviceAccess>::InputCapability
+    {
+        (*cap).clone()
     }
 
-    // FIXME: Er, what? That's never going to actually share anything!
-    fn rebind_input(&self, &input: &usize) -> Arc<DestCtx::InputDev> {
-        Arc::new(
-            self.script.allocations[input].devices.iter().map(|device| {
-                SingleInputDev {
-                    device: device.clone(),
-                    state: RwLock::new(None),
-                }
-            }).collect())
+    fn rebind_output_capability(&self, cap: &<<Self as Rebinder>::SourceDev as DeviceAccess>::OutputCapability) ->
+        <<Self as Rebinder>::DestDev as DeviceAccess>::OutputCapability
+    {
+        (*cap).clone()
     }
 
-    fn rebind_output(&self, &output: &usize) -> Arc<OutputDev> {
-        Arc::new(
-            self.script.allocations[output].devices.iter().map(|device| {
-                SingleOutputDev {
-                    device: device.clone()
-                }
-            }).collect())
+    // Recinding the context
+    fn rebind_condition(&self, state: &<<Self as Rebinder>::SourceCtx as Context>::ConditionState) ->
+        <<Self as Rebinder>::DestCtx as Context>::ConditionState
+    {
+        // By default, conditions are not met.
+        false
     }
 
-    fn rebind_condition(&self, _: &()) -> ConditionDev {
-        ConditionDev {
-            is_met: false
+    fn rebind_input(&self, index: &<<Self as Rebinder>::SourceCtx as Context>::InputSet) ->
+        <<Self as Rebinder>::DestCtx as Context>::InputSet
+    {
+        match self.inputs[*index] {
+            None => panic!("We should handle this without panicking"),
+            Some(ref input) => input.clone()
+        }
+    }
+
+
+    fn rebind_output(&self, index: &<<Self as Rebinder>::SourceCtx as Context>::OutputSet) ->
+        <<Self as Rebinder>::DestCtx as Context>::OutputSet
+    {
+        match self.outputs[*index] {
+            None => panic!("We should handle this without panicking"),
+            Some(ref output) => output.clone()
         }
     }
 }
-*/
 /*
 impl Script {
     ///

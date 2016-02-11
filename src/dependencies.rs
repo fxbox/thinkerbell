@@ -7,10 +7,10 @@
 /// can typically be instantiated either with actual bindings to
 /// devices, or with a unit-testing framework.
 pub trait DeviceAccess {
-    type DeviceKind;
+    type DeviceKind: Clone;
     type Device: Clone;
-    type InputCapability;
-    type OutputCapability;
+    type InputCapability: Clone;
+    type OutputCapability: Clone;
     type Watcher: Watcher;
 }
 

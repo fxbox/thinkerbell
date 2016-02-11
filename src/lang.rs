@@ -14,16 +14,13 @@ use values::{Value, Range};
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock}; // FIXME: Investigate if we really need so many instances of Arc. I suspect that most can be replaced by &'a.
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::sync::mpsc::{Receiver, Sender};
 use std::marker::PhantomData;
 use std::result::Result;
 use std::result::Result::*;
 
 extern crate chrono;
 use self::chrono::{Duration, DateTime, UTC};
-
-extern crate rustc_serialize;
-use self::rustc_serialize::json::Json;
 
 
 ///
@@ -415,8 +412,9 @@ impl<Ctx, Dev> Condition<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
 }
 */
 
-pub enum Error { // FIXME: Add details
-    CompilationError
+pub enum Error {
+    CompilationError, // FIXME: Add details
+    DeviceNotFound, // FIXME: Add details
 }
 
 /// Rebind a script from an environment to another one.
@@ -620,19 +618,19 @@ impl DeviceAccess for UncheckedDev {
     type OutputCapability = String;
     type Watcher = FakeWatcher;
 
-    fn get_device_kind(&self, key: &String) -> Option<String> {
+    fn get_device_kind(key: &String) -> Option<String> {
         Some(key.clone())
     }
 
-    fn get_device(&self, key: &String) -> Option<String> {
+    fn get_device(key: &String) -> Option<String> {
         Some(key.clone())
     }
 
-    fn get_input_capability(&self, key: &String) -> Option<String> {
+    fn get_input_capability(key: &String) -> Option<String> {
         Some(key.clone())
     }
 
-    fn get_output_capability(&self, key: &String) -> Option<String> {
+    fn get_output_capability(key: &String) -> Option<String> {
         Some(key.clone())
     }
 }
@@ -712,12 +710,61 @@ struct Precompiler<'a, Dev> where Dev: DeviceAccess {
 }
 
 impl<'a, Dev> Precompiler<'a, Dev> where Dev: DeviceAccess {
-    fn new(source: &'a Script<UncheckedCtx, UncheckedDev>) -> Result<Self, ()> {
-        // Precompute allocations
-        let inputs = Vec::new();
-        let outputs = Vec::new();
+    fn new(source: &'a Script<UncheckedCtx, UncheckedDev>) -> Result<Self, Error> {
+        // In an UncheckedCtx, inputs and outputs are (unchecked)
+        // indices towards the vector of allocations. In this step,
+        // we 1/ check the indices, to make sure that they actually
+        // point inside the vector;
+        // 2/ prepare arrays `inputs` and `outputs`, which will later
+        // serve to replace the indices by pointers to the Arc containing
+        // details on the device and its state.
 
-        // FIXME: Populate
+        let mut inputs = Vec::new();
+        let mut outputs = Vec::new();
+
+        if source.allocations.len() != source.requirements.len() {
+            return Err(Error::CompilationError);
+        }
+
+        for (alloc, req) in source.allocations.iter().zip(&source.requirements) {
+            let mut input = None;
+            let mut output = None;
+
+            let has_inputs = req.inputs.len() > 0;
+            let has_outputs = req.inputs.len() > 0;
+            if  !has_inputs && !has_outputs {
+                // An empty resource? This doesn't make sense.
+                return Err(Error::CompilationError);
+            }
+
+            if has_inputs {
+                let mut resolved = Vec::with_capacity(alloc.devices.len());
+                for dev in &alloc.devices {
+                    match Dev::get_device(&dev) {
+                        None => return Err(Error::DeviceNotFound),
+                        Some(d) => resolved.push(Arc::new(CompiledInput {
+                            device: d,
+                            state: RwLock::new(None)
+                        }))
+                    }
+                }
+                input = Some(Arc::new(resolved));
+            }
+            if has_outputs {
+                let mut resolved = Vec::with_capacity(alloc.devices.len());
+                for dev in &alloc.devices {
+                    match Dev::get_device(&dev) {
+                        None => return Err(Error::DeviceNotFound),
+                        Some(d) => resolved.push(Arc::new(CompiledOutput {
+                            device: d,
+                        }))
+                    }
+                }
+                output = Some(Arc::new(resolved));
+            }
+            inputs.push(input);
+            outputs.push(output);
+        }
 
         Ok(Precompiler {
             script: source,

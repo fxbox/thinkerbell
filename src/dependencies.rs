@@ -14,10 +14,10 @@ pub trait DeviceAccess {
     type OutputCapability: Clone;
     type Watcher: Watcher + Watcher<Device=Self::Device, InputCapability=Self::InputCapability>;
 
-    fn get_device_kind(&self, &String) -> Option<Self::DeviceKind>;
-    fn get_device(&self, &String) -> Option<Self::Device>;
-    fn get_input_capability(&self, &String) -> Option<Self::InputCapability>;
-    fn get_output_capability(&self, &String) -> Option<Self::OutputCapability>;
+    fn get_device_kind(&String) -> Option<Self::DeviceKind>;
+    fn get_device(&String) -> Option<Self::Device>;
+    fn get_input_capability(&String) -> Option<Self::InputCapability>;
+    fn get_output_capability(&String) -> Option<Self::OutputCapability>;
 }
 
 /// An object that may be used to track state changes in devices.

@@ -412,11 +412,24 @@ impl<Ctx, Dev> Condition<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
 }
 */
 
-pub enum Error {
-    CompilationError, // FIXME: Add details
+#[derive(Debug)]
+pub enum SourceError {
+    AllocationLengthError { allocations: usize, requirements: usize},
+    NoCapability, // FIXME: Add details
+    NoSuchInput, // FIXME: Add details
+    NoSuchOutput, // FIXME: Add details
+}
+
+#[derive(Debug)]
+pub enum DevAccessError {
     DeviceNotFound, // FIXME: Add details
     DeviceKindNotFound, // FIXME: Add details
-    DeviceCapabilityNotFound, // FIXME: Add details
+    DeviceCapabilityNotFound, // FIXME: Add details    
+}
+
+pub enum Error {
+    SourceError(SourceError),
+    DevAccessError(DevAccessError),
 }
 
 /// Rebind a script from an environment to another one.
@@ -713,6 +726,11 @@ struct Precompiler<'a, Dev> where Dev: DeviceAccess {
 
 impl<'a, Dev> Precompiler<'a, Dev> where Dev: DeviceAccess {
     fn new(source: &'a Script<UncheckedCtx, UncheckedDev>) -> Result<Self, Error> {
+
+        use self::Error::*;
+        use self::SourceError::*;
+        use self::DevAccessError::*;
+
         // In an UncheckedCtx, inputs and outputs are (unchecked)
         // indices towards the vector of allocations. In this step,
         // we 1/ check the indices, to make sure that they actually
@@ -725,7 +743,10 @@ impl<'a, Dev> Precompiler<'a, Dev> where Dev: DeviceAccess {
         let mut outputs = Vec::new();
 
         if source.allocations.len() != source.requirements.len() {
-            return Err(Error::CompilationError);
+            return Err(SourceError(AllocationLengthError {
+                allocations: source.allocations.len(),
+                requirements: source.requirements.len()
+            }));
         }
 
         for (alloc, req) in source.allocations.iter().zip(&source.requirements) {
@@ -736,14 +757,14 @@ impl<'a, Dev> Precompiler<'a, Dev> where Dev: DeviceAccess {
             let has_outputs = req.inputs.len() > 0;
             if  !has_inputs && !has_outputs {
                 // An empty resource? This doesn't make sense.
-                return Err(Error::CompilationError);
+                return Err(SourceError(NoCapability));
             }
 
             if has_inputs {
                 let mut resolved = Vec::with_capacity(alloc.devices.len());
                 for dev in &alloc.devices {
                     match Dev::get_device(&dev) {
-                        None => return Err(Error::DeviceNotFound),
+                        None => return Err(DevAccessError(DeviceNotFound)),
                         Some(d) => resolved.push(Arc::new(CompiledInput {
                             device: d,
                             state: RwLock::new(None)
@@ -756,7 +777,7 @@ impl<'a, Dev> Precompiler<'a, Dev> where Dev: DeviceAccess {
                 let mut resolved = Vec::with_capacity(alloc.devices.len());
                 for dev in &alloc.devices {
                     match Dev::get_device(&dev) {
-                        None => return Err(Error::DeviceNotFound),
+                        None => return Err(DevAccessError(DeviceNotFound)),
                         Some(d) => resolved.push(Arc::new(CompiledOutput {
                             device: d,
                         }))
@@ -790,7 +811,7 @@ impl<'a, Dev> Rebinder for Precompiler<'a, Dev>
         Result<<<Self as Rebinder>::DestDev as DeviceAccess>::Device, Error>
     {
         match Self::DestDev::get_device(dev) {
-            None => Err(Error::DeviceNotFound),
+            None => Err(Error::DevAccessError(DevAccessError::DeviceNotFound)),
             Some(found) => Ok(found.clone())
         }
     }
@@ -800,7 +821,7 @@ impl<'a, Dev> Rebinder for Precompiler<'a, Dev>
         Result<<<Self as Rebinder>::DestDev as DeviceAccess>::DeviceKind, Error>
     {
         match Self::DestDev::get_device_kind(kind) {
-            None => Err(Error::DeviceKindNotFound),
+            None => Err(Error::DevAccessError(DevAccessError::DeviceKindNotFound)),
             Some(found) => Ok(found.clone())
         }
     }
@@ -809,7 +830,7 @@ impl<'a, Dev> Rebinder for Precompiler<'a, Dev>
         Result<<<Self as Rebinder>::DestDev as DeviceAccess>::InputCapability, Error>
     {
         match Self::DestDev::get_input_capability(cap) {
-            None => Err(Error::DeviceCapabilityNotFound),
+            None => Err(Error::DevAccessError(DevAccessError::DeviceCapabilityNotFound)),
             Some(found) => Ok(found.clone())
         }
     }
@@ -818,7 +839,7 @@ impl<'a, Dev> Rebinder for Precompiler<'a, Dev>
         Result<<<Self as Rebinder>::DestDev as DeviceAccess>::OutputCapability, Error>
     {
         match Self::DestDev::get_output_capability(cap) {
-            None => Err(Error::DeviceCapabilityNotFound),
+            None => Err(Error::DevAccessError(DevAccessError::DeviceCapabilityNotFound)),
             Some(found) => Ok(found.clone())
         }
     }
@@ -835,7 +856,7 @@ impl<'a, Dev> Rebinder for Precompiler<'a, Dev>
         Result<<<Self as Rebinder>::DestCtx as Context>::InputSet, Error>
     {
         match self.inputs[*index] {
-            None => Err(Error::CompilationError),
+            None => Err(Error::SourceError(SourceError::NoSuchInput)),
             Some(ref input) => Ok(input.clone())
         }
     }
@@ -845,7 +866,7 @@ impl<'a, Dev> Rebinder for Precompiler<'a, Dev>
         Result<<<Self as Rebinder>::DestCtx as Context>::OutputSet, Error>
     {
         match self.outputs[*index] {
-            None => Err(Error::CompilationError),
+            None => Err(Error::SourceError(SourceError::NoSuchOutput)),
             Some(ref output) => Ok(output.clone())
         }
     }

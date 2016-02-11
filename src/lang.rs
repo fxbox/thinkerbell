@@ -415,6 +415,8 @@ impl<Ctx, Dev> Condition<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
 pub enum Error {
     CompilationError, // FIXME: Add details
     DeviceNotFound, // FIXME: Add details
+    DeviceKindNotFound, // FIXME: Add details
+    DeviceCapabilityNotFound, // FIXME: Add details
 }
 
 /// Rebind a script from an environment to another one.
@@ -780,33 +782,45 @@ impl<'a, Dev> Rebinder for Precompiler<'a, Dev>
     type SourceCtx = UncheckedCtx;
     type DestCtx = CompiledCtx<Dev>;
 
-    type SourceDev = Dev;
+    type SourceDev = UncheckedDev;
     type DestDev = Dev;
 
     // Rebinding the device access. Nothing to do.
     fn rebind_device(&self, dev: &<<Self as Rebinder>::SourceDev as DeviceAccess>::Device) ->
         Result<<<Self as Rebinder>::DestDev as DeviceAccess>::Device, Error>
     {
-        Ok(dev.clone())
+        match Self::DestDev::get_device(dev) {
+            None => Err(Error::DeviceNotFound),
+            Some(found) => Ok(found.clone())
+        }
     }
 
 
     fn rebind_device_kind(&self, kind: &<<Self as Rebinder>::SourceDev as DeviceAccess>::DeviceKind) ->
         Result<<<Self as Rebinder>::DestDev as DeviceAccess>::DeviceKind, Error>
     {
-        Ok((*kind).clone())
+        match Self::DestDev::get_device_kind(kind) {
+            None => Err(Error::DeviceKindNotFound),
+            Some(found) => Ok(found.clone())
+        }
     }
     
     fn rebind_input_capability(&self, cap: &<<Self as Rebinder>::SourceDev as DeviceAccess>::InputCapability) ->
         Result<<<Self as Rebinder>::DestDev as DeviceAccess>::InputCapability, Error>
     {
-        Ok((*cap).clone())
+        match Self::DestDev::get_input_capability(cap) {
+            None => Err(Error::DeviceCapabilityNotFound),
+            Some(found) => Ok(found.clone())
+        }
     }
 
     fn rebind_output_capability(&self, cap: &<<Self as Rebinder>::SourceDev as DeviceAccess>::OutputCapability) ->
         Result<<<Self as Rebinder>::DestDev as DeviceAccess>::OutputCapability, Error>
     {
-        Ok((*cap).clone())
+        match Self::DestDev::get_output_capability(cap) {
+            None => Err(Error::DeviceCapabilityNotFound),
+            Some(found) => Ok(found.clone())
+        }
     }
 
     // Recinding the context

@@ -9,18 +9,19 @@
 /// complex monitors can installed from the web from a master device
 /// (i.e. the user's cellphone or smart tv).
 
-use dependencies::{DeviceKind, InputCapability, OutputCapability, Device, Range, Value, Watcher};
+use dependencies::{Environment, ExecutionEnvironment, IsMet, DeviceKind, InputCapability, OutputCapability, Device, Range, Value, Watcher};
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock}; // FIXME: Investigate if we really need so many instances of Arc.
 use std::sync::mpsc::{channel, Receiver, Sender};
-use std::thread;
+use std::marker::PhantomData;
 
 extern crate chrono;
 use self::chrono::{Duration, DateTime, UTC};
 
 extern crate rustc_serialize;
 use self::rustc_serialize::json::Json;
+
 
 ///
 /// # Definition of the AST
@@ -37,8 +38,7 @@ use self::rustc_serialize::json::Json;
 /// Monitor applications are installed from a paired device. They may
 /// either be part of a broader application (which can install them
 /// through a web/REST API) or live on their own.
-#[derive(Clone)]
-pub struct Script<Input, Output, ConditionState> {
+pub struct Script<Env> where Env: Environment {
     /// Authorization, author, description, update url, version, ...
     metadata: (), // FIXME: Implement
 
@@ -47,37 +47,35 @@ pub struct Script<Input, Output, ConditionState> {
     /// UX. Re-allocating resources may be requested by the user, the
     /// foxbox, or an application, e.g. when replacing a device or
     /// upgrading the app.
-    requirements: Vec<Arc<Requirement>>,
+    requirements: Vec<Arc<Requirement<Env>>>,
 
     /// Resources actually allocated for each requirement.
-    allocations: Vec<Resource<Input, Output>>,
+    allocations: Vec<Resource<Env>>,
 
     /// A set of rules, stating what must be done in which circumstance.
-    rules: Vec<Trigger<Input, Output, ConditionState>>,
+    rules: Vec<Trigger<Env>>,
 }
 
-#[derive(Clone)]
-struct Resource<Input, Output> {
-    devices: Vec<Device>,
-    sensor: Option<Input>,
-    effector: Option<Output>,
+struct Resource<Env> where Env: Environment {
+    devices: Vec<Env::Device>,
+    sensor: Option<Env::Input>,
+    effector: Option<Env::Output>,
 }
 
 
 /// A resource needed by this application. Typically, a definition of
 /// device with some input our output capabilities.
-#[derive(Clone)]
-struct Requirement {
+struct Requirement<Env> where Env: Environment {
     /// The kind of resource, e.g. "a flashbulb".
     kind: DeviceKind,
 
     /// Input capabilities we need from the device, e.g. "the time of
     /// day", "the current temperature".
-    inputs: Vec<InputCapability>,
+    inputs: Vec<Env::InputCapability>,
 
     /// Output capabilities we need from the device, e.g. "play a
     /// sound", "set luminosity".
-    outputs: Vec<OutputCapability>,
+    outputs: Vec<Env::OutputCapability>,
     
     /// Minimal number of resources required. If unspecified in the
     /// script, this is 1.
@@ -92,13 +90,12 @@ struct Requirement {
 
 /// A single trigger, i.e. "when some condition becomes true, do
 /// something".
-#[derive(Clone)]
-struct Trigger<Input, Output, ConditionState> {
+struct Trigger<Env> where Env: Environment {
     /// The condition in which to execute the trigger.
-    condition: Conjunction<Input, ConditionState>,
+    condition: Conjunction<Env>,
 
     /// Stuff to do once `condition` is met.
-    execute: Vec<Statement<Input, Output, ConditionState>>,
+    execute: Vec<Statement<Env>>,
 
     /// Minimal duration between two executions of the trigger.  If a
     /// duration was not picked by the developer, a reasonable default
@@ -107,11 +104,10 @@ struct Trigger<Input, Output, ConditionState> {
 }
 
 /// A conjunction (e.g. a "and") of conditions.
-#[derive(Clone)]
-struct Conjunction<Input, ConditionState> {
+struct Conjunction<Env> where Env: Environment {
     /// The conjunction is true iff all of the following expressions evaluate to true.
-    all: Vec<Condition<Input, ConditionState>>,
-    state: ConditionState,
+    all: Vec<Condition<Env>>,
+    state: Env::ConditionState,
 }
 
 /// An individual condition.
@@ -121,49 +117,45 @@ struct Conjunction<Input, ConditionState> {
 ///
 /// A condition is true if *any* of the sensors allocated to this
 /// requirement has yielded a value that is in the given range.
-#[derive(Clone)]
-struct Condition<Input, ConditionState> {
-    input: Input,
-    capability: InputCapability,
+struct Condition<Env> where Env: Environment {
+    input: Env::Input,
+    capability: Env::InputCapability,
     range: Range,
-    state: ConditionState,
+    state: Env::ConditionState,
 }
 
 
-/// Stuff to actually do. In practice, this maps to a REST call.
-#[derive(Clone)]
-struct Statement<Input, Output, ConditionState> {
+/// Stuff to actually do. In practice, this means placing calls to devices.
+struct Statement<Env> where Env: Environment {
     /// The resource to which this command applies.  e.g. "all
     /// heaters", "a single communication channel", etc.
-    destination: Output,
+    destination: Env::Output,
 
     /// The action to execute on the resource.
-    action: OutputCapability,
+    action: Env::OutputCapability,
 
     /// Data to send to the resource.
-    arguments: HashMap<String, Expression<Input, ConditionState>>
+    arguments: HashMap<String, Expression<Env>>
 }
 
-#[derive(Clone)]
-struct InputSet<Input, ConditionState> {
+struct InputSet<Env> where Env: Environment {
     /// The set of inputs from which to grab the value.
-    condition: Condition<Input, ConditionState>,
+    condition: Condition<Env>,
     /// The value to grab.
-    capability: InputCapability,
+    capability: Env::InputCapability,
 }
 
 /// A value that may be sent to an output.
-#[derive(Clone)]
-enum Expression<Input, ConditionState> {
+enum Expression<Env> where Env: Environment {
     /// A dynamic value, which must be read from one or more inputs.
     // FIXME: Not ready yet
-    Input(InputSet<Input, ConditionState>),
+    Input(InputSet<Env>),
 
     /// A constant value.
     Value(Value),
 
     /// More than a single value.
-    Vec(Vec<Expression<Input, ConditionState>>)
+    Vec(Vec<Expression<Env>>)
 }
 
 ///
@@ -172,9 +164,9 @@ enum Expression<Input, ConditionState> {
 
 /// A script ready to be executed.
 /// Each script is meant to be executed in an individual thread.
-struct ExecutionTask {
+struct ExecutionTask<Env> where Env: ExecutionEnvironment {
     /// The current state of execution the script.
-    state: Script<Arc<InputEnv>, Arc<OutputEnv>, ConditionEnv>,
+    state: Script<Env>,
 
     /// Communicating with the thread running script.
     tx: Sender<ExecutionOp>,
@@ -182,28 +174,6 @@ struct ExecutionTask {
 }
 
 
-/// Data, labelled with its latest update.
-struct DatedData {
-    updated: DateTime<UTC>,
-    data: Value,
-}
-
-/// A single input device, ready to use, with its latest known state.
-struct SingleInputEnv {
-    device: Device,
-    state: RwLock<Option<DatedData>>
-}
-type InputEnv = Vec<SingleInputEnv>;
-
-/// A single output device, ready to use.
-struct SingleOutputEnv {
-    device: Device
-}
-type OutputEnv = Vec<SingleOutputEnv>;
-
-struct ConditionEnv {
-    is_met: bool
-}
 
 enum ExecutionOp {
     /// An input has been updated, time to check if we have triggers
@@ -215,12 +185,12 @@ enum ExecutionOp {
 }
 
 
-impl ExecutionTask {
+impl<Env> ExecutionTask<Env> where Env: ExecutionEnvironment {
     /// Create a new execution task.
     ///
     /// The caller is responsible for spawning a new thread and
     /// calling `run()`.
-    fn new<'a>(script: &'a Script<usize, usize, ()>) -> Self {
+    fn new(script: &Script<UncheckedEnv>) -> Self {
         // Prepare the script for execution:
         // - replace instances of Input with InputEnv, which map
         //   to a specific device and cache the latest known value
@@ -245,7 +215,7 @@ impl ExecutionTask {
     /// Execute the monitoring task.
     /// This currently expects to be executed in its own thread.
     fn run(&mut self) {
-        let mut watcher = Watcher::new();
+        let mut watcher = Env::Watcher::new();
         let mut witnesses = Vec::new();
 
         // Start listening to all inputs that appear in conditions.
@@ -333,18 +303,13 @@ impl ExecutionTask {
 /// # Evaluating conditions
 ///
 
-struct IsMet {
-    old: bool,
-    new: bool,
-}
-
-impl<O> Trigger<Arc<InputEnv>, O, ConditionEnv> {
+impl<Env> Trigger<Env> where Env: ExecutionEnvironment {
     fn is_met(&mut self) -> IsMet {
         self.condition.is_met()
     }
 }
 
-impl Conjunction<Arc<InputEnv>, ConditionEnv> {
+impl<Env> Conjunction<Env> where Env: ExecutionEnvironment {
     /// For a conjunction to be true, all its components must be true.
     fn is_met(&mut self) -> IsMet {
         let old = self.state.is_met.clone();
@@ -365,7 +330,7 @@ impl Conjunction<Arc<InputEnv>, ConditionEnv> {
     }
 }
 
-impl Condition<Arc<InputEnv>, ConditionEnv> {
+impl<Env> Condition<Env> where Env: ExecutionEnvironment {
     /// Determine if one of the devices serving as input for this
     /// condition meets the condition.
     fn is_met(&mut self) -> IsMet {
@@ -423,19 +388,17 @@ impl Condition<Arc<InputEnv>, ConditionEnv> {
 /// # Changing the kind of variable used.
 ///
 
-trait Rebinder<Input, Output, Condition, Input2, Output2, Condition2> where
-    Input2: Clone,
-    Output2: Clone
-{
-    fn alloc_input(&self, &Input) -> Input2;
-    fn alloc_output(&self, &Output) -> Output2;
-    fn alloc_condition(&self, &Condition) -> Condition2;
+trait Rebinder {
+    type SourceEnv;
+    type DestEnv;
+    fn alloc_input(&self, &<<Self as Rebinder>::SourceEnv as Environment>::Input) -> <<Self as Rebinder>::DestEnv as Environment>::Input;
+    fn alloc_output(&self, &<<Self as Rebinder>::SourceEnv as Environment>::Output) -> <<Self as Rebinder>::DestEnv as Environment>::Output;
+    fn alloc_condition(&self, &<<Self as Rebinder>::SourceEnv as Environment>::ConditionState) -> <<Self as Rebinder>::DestEnv as Environment>::ConditionState;
 }
 
-impl<Input, Output, Condition> Script<Input, Output, Condition> {
-    fn rebind<Input2, Output2, Condition2>(&self, rebinder: &Rebinder<Input, Output, Condition, Input2, Output2, Condition2>) -> Script<Input2, Output2, Condition2> where
-        Input2: Clone,
-        Output2: Clone
+impl<Env> Script<Env> {
+    fn rebind<R>(&self, rebinder: &R) -> Script<R::DestEnv>
+        where R: Rebinder<SourceEnv = Env>
     {
         let rules = self.rules.iter().map(|ref rule| {
             rule.rebind(rebinder)
@@ -458,10 +421,9 @@ impl<Input, Output, Condition> Script<Input, Output, Condition> {
     }
 }
 
-impl<Input, Output, Condition> Trigger<Input, Output, Condition> {
-    fn rebind<Input2, Output2, Condition2>(&self, rebinder: &Rebinder<Input, Output, Condition, Input2, Output2, Condition2>) -> Trigger<Input2, Output2, Condition2> where
-        Input2: Clone,
-        Output2: Clone
+impl<Env> Trigger<Env> {
+    fn rebind<R>(&self, rebinder: &R) -> Trigger<R::DestEnv>
+        where R: Rebinder<SourceEnv = Env>
     {
         let execute = self.execute.iter().map(|ref ex| {
             ex.rebind(rebinder)
@@ -475,10 +437,10 @@ impl<Input, Output, Condition> Trigger<Input, Output, Condition> {
 }
 
 
-impl<Input, ConditionState> Conjunction<Input, ConditionState> {
-    fn rebind<Output, Input2, Output2, Condition2>(&self, rebinder: &Rebinder<Input, Output, ConditionState, Input2, Output2, Condition2>) -> Conjunction<Input2, Condition2> where
-        Input2: Clone,
-        Output2: Clone {
+impl<Env> Conjunction<Env> {
+    fn rebind<R>(&self, rebinder: &R) -> Conjunction<R::DestEnv>
+        where R: Rebinder<SourceEnv = Env>
+    {
         Conjunction {
             all: self.all.iter().map(|c| c.rebind(rebinder)).collect(),
             state: rebinder.alloc_condition(&self.state),
@@ -486,10 +448,10 @@ impl<Input, ConditionState> Conjunction<Input, ConditionState> {
     }
 }
 
-impl<Input, ConditionState> Condition<Input, ConditionState> {
-    fn rebind<Output, Input2, Output2, Condition2>(&self, rebinder: &Rebinder<Input, Output, ConditionState, Input2, Output2, Condition2>) -> Condition<Input2, Condition2> where
-        Input2: Clone,
-        Output2: Clone {
+impl<Env> Condition<Env> {
+    fn rebind<R>(&self, rebinder: &R) -> Condition<R::DestEnv>
+        where R: Rebinder<SourceEnv = Env>
+    {
         Condition {
             range: self.range.clone(),
             capability: self.capability.clone(),
@@ -499,10 +461,10 @@ impl<Input, ConditionState> Condition<Input, ConditionState> {
     }
 }
 
-impl <Input, Output, ConditionState> Statement<Input, Output, ConditionState> {
-    fn rebind<Input2, Output2, Condition2>(&self, rebinder: &Rebinder<Input, Output, ConditionState, Input2, Output2, Condition2>) -> Statement<Input2, Output2, Condition2> where
-        Input2: Clone,
-        Output2: Clone {
+impl<Env> Statement<Env> {
+    fn rebind<R>(&self, rebinder: &R) -> Statement<R::DestEnv>
+        where R: Rebinder<SourceEnv = Env>
+    {
             let arguments = self.arguments.iter().map(|(key, value)| {
                 (key.clone(), value.rebind(rebinder))
             }).collect();
@@ -514,10 +476,9 @@ impl <Input, Output, ConditionState> Statement<Input, Output, ConditionState> {
         }
 }
 
-impl<Input, ConditionState> Expression<Input, ConditionState> {
-    fn rebind<Output, Input2, Output2, Condition2>(&self, rebinder: &Rebinder<Input, Output, ConditionState, Input2, Output2, Condition2>) -> Expression<Input2, Condition2> where
-        Input2: Clone,
-        Output2: Clone 
+impl<Env> Expression<Env> {
+    fn rebind<R>(&self, rebinder: &R) -> Expression<R::DestEnv>
+        where R: Rebinder<SourceEnv = Env>
     {
         use self::Expression::*;
         match *self {
@@ -534,18 +495,94 @@ impl<Input, ConditionState> Expression<Input, ConditionState> {
 /// # Precompilation
 ///
 
-struct Precompiler<'a> {
-    script: &'a Script<usize, usize, ()>
+struct UncheckedEnv;
+//struct CompiledEnv;
+
+impl Environment for UncheckedEnv {
+    type Input = usize;
+    type Output = usize;
+    type ConditionState = ();
+    type Device = Device;
+    type InputCapability = InputCapability;
+    type OutputCapability = OutputCapability;
+    type Watcher = FakeWatcher;
 }
 
-impl<'a> Precompiler<'a> {
-    fn new(source: &'a Script<usize, usize, ()>) -> Self {
+struct FakeWatcher;
+impl Watcher for FakeWatcher {
+    type Witness = ();
+    fn new() -> FakeWatcher {
+        panic!("Cannot instantiate a FakeWatcher");
+    }
+
+    fn add<F>(&mut self,
+              device: &Device,
+              input: &InputCapability,
+              condition: &Range,
+              cb: F) -> () where F:FnOnce(Value)
+    {
+        panic!("Cannot execute a FakeWatcher");
+    }
+}
+
+/*
+impl Environment for CompiledEnv {
+    type Input = Arc<InputEnv>;
+    type Output = Arc<OutputEnv>;
+    type ConditionState = ConditionEnv;
+    type Device = Device;
+    type InputCapability = InputCapability;
+    type OutputCapability = OutputCapability;
+}
+
+impl ExecutionEnvironment for CompiledEnv {
+    type Watcher = Box<Watcher>;
+    fn condition_is_met<'a>(is_met: &'a mut Self::ConditionState) -> &'a IsMet {
+        is_met
+    }
+}
+ */
+
+/// Data, labelled with its latest update.
+struct DatedData {
+    updated: DateTime<UTC>,
+    data: Value,
+}
+
+/// A single input device, ready to use, with its latest known state.
+struct SingleInputEnv {
+    device: Device,
+    state: RwLock<Option<DatedData>>
+}
+type InputEnv = Vec<SingleInputEnv>;
+
+/// A single output device, ready to use.
+struct SingleOutputEnv {
+    device: Device
+}
+type OutputEnv = Vec<SingleOutputEnv>;
+
+struct ConditionEnv {
+    is_met: bool
+}
+
+struct Precompiler<'a, DestEnv>
+    where DestEnv: ExecutionEnvironment {
+    script: &'a Script<UncheckedEnv>,
+    phantom: PhantomData<DestEnv>,
+}
+
+impl<'a, DestEnv> Precompiler<'a, DestEnv> where DestEnv: ExecutionEnvironment {
+    fn new(source: &'a Script<UncheckedEnv>) -> Self {
         Precompiler {
             script: source
         }
     }
 }
-impl<'a> Rebinder<usize, usize, (), Arc<InputEnv>, Arc<OutputEnv>, ConditionEnv> for Precompiler<'a> {
+impl<'a, DestEnv> Rebinder for Precompiler<'a, DestEnv>
+    where DestEnv: ExecutionEnvironment {
+    type DestEnv = DestEnv;
+    type SourceEnv = UncheckedEnv;
     fn alloc_input(&self, &input: &usize) -> Arc<InputEnv> {
         Arc::new(
             self.script.allocations[input].devices.iter().map(|device| {

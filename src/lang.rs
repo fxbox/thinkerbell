@@ -14,7 +14,7 @@ use values::{Value, Range};
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock}; // FIXME: Investigate if we really need so many instances of Arc. I suspect that most can be replaced by &'a.
-use std::sync::mpsc::{Receiver, Sender};
+use std::sync::mpsc::{channel, Receiver, Sender};
 use std::marker::PhantomData;
 use std::result::Result;
 use std::result::Result::*;
@@ -188,10 +188,6 @@ struct ExecutionTask<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
 
 
 
-struct IsMet {
-    old: bool,
-    new: bool,
-}
 
 
 enum ExecutionOp {
@@ -204,29 +200,26 @@ enum ExecutionOp {
 }
 
 
-impl<Ctx, Dev> ExecutionTask<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
+impl<Dev> ExecutionTask<CompiledCtx<Dev>, Dev> where Dev: DeviceAccess {
     /// Create a new execution task.
     ///
     /// The caller is responsible for spawning a new thread and
     /// calling `run()`.
-    fn new(script: &Script<UncheckedCtx, UncheckedDev>) -> Self {
-        panic!("Not implemented");
-/*
+    fn new(script: &Script<UncheckedCtx, UncheckedDev>) -> Result<Self, Error> {
         // Prepare the script for execution:
         // - replace instances of Input with InputDev, which map
         //   to a specific device and cache the latest known value
         //   on the input.
         // - replace instances of Output with OutputDev
-        let precompiler = Precompiler::new(script);
-        let bound = script.rebind(&precompiler);
+        let precompiler = try!(Precompiler::new(script));
+        let bound = try!(script.rebind(&precompiler));
         
         let (tx, rx) = channel();
-        ExecutionTask {
+        Ok(ExecutionTask {
             state: bound,
             rx: rx,
             tx: tx
-        }
-*/
+        })
     }
 
     /// Get a channel that may be used to send commands to the task.
@@ -327,6 +320,12 @@ impl<Ctx, Dev> ExecutionTask<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
 ///
 /// # Evaluating conditions
 ///
+
+struct IsMet {
+    old: bool,
+    new: bool,
+}
+
 impl<Dev> Trigger<CompiledCtx<Dev>, Dev> where Dev: DeviceAccess {
     fn is_met(&mut self) -> IsMet {
         self.condition.is_met()

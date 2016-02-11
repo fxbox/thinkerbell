@@ -65,7 +65,7 @@ struct Resource<Env> where Env: Environment {
 /// device with some input our output capabilities.
 struct Requirement<Env> where Env: Environment {
     /// The kind of resource, e.g. "a flashbulb".
-    kind: DeviceKind,
+    kind: Env::DeviceKind,
 
     /// Input capabilities we need from the device, e.g. "the time of
     /// day", "the current temperature".
@@ -411,43 +411,59 @@ impl<Env> Condition<Env> where Env: ExecutionEnvironment {
 trait Rebinder {
     type SourceEnv: Environment;
     type DestEnv: Environment;
-    fn alloc_input(&self, &<<Self as Rebinder>::SourceEnv as Environment>::Input) ->
+
+    fn rebind_device(&self, &<<Self as Rebinder>::SourceEnv as Environment>::Device) ->
+        <<Self as Rebinder>::DestEnv as Environment>::Device;
+    fn rebind_device_kind(&self, &<<Self as Rebinder>::SourceEnv as Environment>::DeviceKind) ->
+        <<Self as Rebinder>::DestEnv as Environment>::DeviceKind;
+        
+    fn rebind_input(&self, &<<Self as Rebinder>::SourceEnv as Environment>::Input) ->
         <<Self as Rebinder>::DestEnv as Environment>::Input;
-    fn alloc_input_capability(&self, &<<Self as Rebinder>::SourceEnv as Environment>::InputCapability) ->
+    fn rebind_input_capability(&self, &<<Self as Rebinder>::SourceEnv as Environment>::InputCapability) ->
         <<Self as Rebinder>::DestEnv as Environment>::InputCapability;
 
-    fn alloc_output(&self, &<<Self as Rebinder>::SourceEnv as Environment>::Output) ->
+    fn rebind_output(&self, &<<Self as Rebinder>::SourceEnv as Environment>::Output) ->
         <<Self as Rebinder>::DestEnv as Environment>::Output;
-    fn alloc_output_capability(&self, &<<Self as Rebinder>::SourceEnv as Environment>::OutputCapability) ->
+    fn rebind_output_capability(&self, &<<Self as Rebinder>::SourceEnv as Environment>::OutputCapability) ->
         <<Self as Rebinder>::DestEnv as Environment>::OutputCapability;
 
-    fn alloc_condition(&self, &<<Self as Rebinder>::SourceEnv as Environment>::ConditionState) ->
+    fn rebind_condition(&self, &<<Self as Rebinder>::SourceEnv as Environment>::ConditionState) ->
         <<Self as Rebinder>::DestEnv as Environment>::ConditionState;
 }
 
-/*
 impl<Env> Script<Env> where Env: Environment {
     fn rebind<R>(&self, rebinder: &R) -> Script<R::DestEnv>
         where R: Rebinder<SourceEnv = Env>
     {
-        let rules = self.rules.iter().map(|ref rule| {
+        let rules: Vec<Trigger<R::DestEnv>> = self.rules.iter().map(|ref rule| {
             rule.rebind(rebinder)
         }).collect();
 
-        let allocations = self.allocations.iter().map(|ref res| {
+        let allocations: Vec<Resource<R::DestEnv>> = self.allocations.iter().map(|ref res| {
             Resource {
-                devices: res.devices.clone(),
+                devices: res.devices.iter().map(|ref device| rebinder.rebind_device(&device)).collect(),
             }
+        }).collect();
+
+        let requirements = self.requirements.iter().map(|ref req| {
+            Arc::new(Requirement {
+                kind: rebinder.rebind_device_kind(&req.kind),
+                inputs: req.inputs.iter().map(|ref cap| rebinder.rebind_input_capability(cap)).collect(),
+                outputs: req.outputs.iter().map(|ref cap| rebinder.rebind_output_capability(cap)).collect(),
+                min: req.min,
+                max: req.max,
+            })
         }).collect();
 
         Script {
             metadata: self.metadata.clone(),
-            requirements: self.requirements.clone(),
+            requirements: requirements,
             allocations: allocations,
             rules: rules,
         }
     }
 }
+
 
 impl<Env> Trigger<Env> where Env: Environment {
     fn rebind<R>(&self, rebinder: &R) -> Trigger<R::DestEnv>
@@ -464,18 +480,17 @@ impl<Env> Trigger<Env> where Env: Environment {
     }
 }
 
-
 impl<Env> Conjunction<Env> where Env: Environment {
     fn rebind<R>(&self, rebinder: &R) -> Conjunction<R::DestEnv>
         where R: Rebinder<SourceEnv = Env>
     {
         Conjunction {
             all: self.all.iter().map(|c| c.rebind(rebinder)).collect(),
-            state: rebinder.alloc_condition(&self.state),
+            state: rebinder.rebind_condition(&self.state),
         }
     }
 }
- */
+
 
 impl<Env> Condition<Env> where Env: Environment {
     fn rebind<R>(&self, rebinder: &R) -> Condition<R::DestEnv>
@@ -483,9 +498,9 @@ impl<Env> Condition<Env> where Env: Environment {
     {
         Condition {
             range: self.range.clone(),
-            capability: rebinder.alloc_input_capability(&self.capability),
-            input: rebinder.alloc_input(&self.input),
-            state: rebinder.alloc_condition(&self.state),
+            capability: rebinder.rebind_input_capability(&self.capability),
+            input: rebinder.rebind_input(&self.input),
+            state: rebinder.rebind_condition(&self.state),
         }
     }
 }
@@ -499,8 +514,8 @@ impl<Env> Statement<Env> where Env: Environment {
                 (key.clone(), value.rebind(rebinder))
             }).collect();
             Statement {
-                destination: rebinder.alloc_output(&self.destination),
-                action: rebinder.alloc_output_capability(&self.action),
+                destination: rebinder.rebind_output(&self.destination),
+                action: rebinder.rebind_output_capability(&self.action),
                 arguments: arguments
             }
         }
@@ -515,7 +530,7 @@ impl<Env> Expression<Env> where Env: Environment {
         match *self {
             Value(ref v) => Value(v.clone()),
             Vec(ref v) => Vec(v.iter().map(|x| x.rebind(rebinder)).collect()),
-            //            Input(ref input) => Input(rebinder.alloc_input(input).clone()),
+            //            Input(ref input) => Input(rebinder.rebind_input(input).clone()),
             Input(_) => panic!("Not impl implemented yet")
         }
     }
@@ -533,9 +548,10 @@ impl Environment for UncheckedEnv {
     type Input = usize;
     type Output = usize;
     type ConditionState = ();
-    type Device = Device;
-    type InputCapability = InputCapability;
-    type OutputCapability = OutputCapability;
+    type Device = Device; // FIXME: String?
+    type DeviceKind = DeviceKind; // FIXME: String?
+    type InputCapability = InputCapability; // FIXME: String?
+    type OutputCapability = OutputCapability; // FIXME: String?
     type Watcher = FakeWatcher;
 }
 
@@ -617,18 +633,18 @@ impl<'a, DestEnv> Rebinder for Precompiler<'a, DestEnv>
     type DestEnv = DestEnv;
     type SourceEnv = UncheckedEnv;
 
-    fn alloc_input(&self, &input: &usize) ->
+    fn rebind_input(&self, &input: &usize) ->
     // Must be DestEnv::InputEnv
     // Must be parameterized by an actual implementation of Env
     {
     }
     
-    fn alloc_input(&self, &input: &usize) -> DestEnv::InputEnv {
+    fn rebind_input(&self, &input: &usize) -> DestEnv::InputEnv {
         
     }
 
     // FIXME: Er, what? That's never going to actually share anything!
-    fn alloc_input(&self, &input: &usize) -> Arc<DestEnv::InputEnv> {
+    fn rebind_input(&self, &input: &usize) -> Arc<DestEnv::InputEnv> {
         Arc::new(
             self.script.allocations[input].devices.iter().map(|device| {
                 SingleInputEnv {
@@ -638,7 +654,7 @@ impl<'a, DestEnv> Rebinder for Precompiler<'a, DestEnv>
             }).collect())
     }
 
-    fn alloc_output(&self, &output: &usize) -> Arc<OutputEnv> {
+    fn rebind_output(&self, &output: &usize) -> Arc<OutputEnv> {
         Arc::new(
             self.script.allocations[output].devices.iter().map(|device| {
                 SingleOutputEnv {
@@ -647,7 +663,7 @@ impl<'a, DestEnv> Rebinder for Precompiler<'a, DestEnv>
             }).collect())
     }
 
-    fn alloc_condition(&self, _: &()) -> ConditionEnv {
+    fn rebind_condition(&self, _: &()) -> ConditionEnv {
         ConditionEnv {
             is_met: false
         }

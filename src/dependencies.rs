@@ -7,6 +7,7 @@
 /// This can be instantiated either with actual bindings to
 /// devices, or with a unit-testing framework.
 pub trait Environment {
+    type DeviceKind;
     type Input;
     type Output;
     type ConditionState;

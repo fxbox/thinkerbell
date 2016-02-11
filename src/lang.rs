@@ -15,6 +15,8 @@ use std::collections::HashMap;
 use std::sync::{Arc, RwLock}; // FIXME: Investigate if we really need so many instances of Arc. I suspect that most can be replaced by &'a.
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::marker::PhantomData;
+use std::result::Result;
+use std::result::Result::*;
 
 extern crate chrono;
 use self::chrono::{Duration, DateTime, UTC};
@@ -412,6 +414,10 @@ impl<Ctx, Dev> Condition<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
 }
 */
 
+pub enum Error { // FIXME: Add details
+    CompilationError
+}
+
 /// Rebind a script from an environment to another one.
 ///
 /// This is typically used as a compilation step, to turn code in
@@ -426,128 +432,156 @@ trait Rebinder {
 
     // Rebinding the device access
     fn rebind_device(&self, &<<Self as Rebinder>::SourceDev as DeviceAccess>::Device) ->
-        <<Self as Rebinder>::DestDev as DeviceAccess>::Device;
+        Result<<<Self as Rebinder>::DestDev as DeviceAccess>::Device, Error>;
     fn rebind_device_kind(&self, &<<Self as Rebinder>::SourceDev as DeviceAccess>::DeviceKind) ->
-        <<Self as Rebinder>::DestDev as DeviceAccess>::DeviceKind;
+        Result<<<Self as Rebinder>::DestDev as DeviceAccess>::DeviceKind, Error>;
     fn rebind_input_capability(&self, &<<Self as Rebinder>::SourceDev as DeviceAccess>::InputCapability) ->
-        <<Self as Rebinder>::DestDev as DeviceAccess>::InputCapability;
+        Result<<<Self as Rebinder>::DestDev as DeviceAccess>::InputCapability, Error>;
     fn rebind_output_capability(&self, &<<Self as Rebinder>::SourceDev as DeviceAccess>::OutputCapability) ->
-        <<Self as Rebinder>::DestDev as DeviceAccess>::OutputCapability;
+        Result<<<Self as Rebinder>::DestDev as DeviceAccess>::OutputCapability, Error>;
 
     // Rebinding the context
     fn rebind_input(&self, &<<Self as Rebinder>::SourceCtx as Context>::InputSet) ->
-        <<Self as Rebinder>::DestCtx as Context>::InputSet;
+        Result<<<Self as Rebinder>::DestCtx as Context>::InputSet, Error>;
 
     fn rebind_output(&self, &<<Self as Rebinder>::SourceCtx as Context>::OutputSet) ->
-        <<Self as Rebinder>::DestCtx as Context>::OutputSet;
+        Result<<<Self as Rebinder>::DestCtx as Context>::OutputSet, Error>;
 
     fn rebind_condition(&self, &<<Self as Rebinder>::SourceCtx as Context>::ConditionState) ->
-        <<Self as Rebinder>::DestCtx as Context>::ConditionState;
+        Result<<<Self as Rebinder>::DestCtx as Context>::ConditionState, Error>;
 }
 
 impl<Ctx, Dev> Script<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
-    fn rebind<R>(&self, rebinder: &R) -> Script<R::DestCtx, R::DestDev>
+    fn rebind<R>(&self, rebinder: &R) -> Result<Script<R::DestCtx, R::DestDev>, Error>
         where R: Rebinder<SourceDev = Dev, SourceCtx = Ctx>
     {
-        let rules = self.rules.iter().map(|ref rule| {
-            rule.rebind(rebinder)
-        }).collect();
+        let mut rules = Vec::with_capacity(self.rules.len());
+        for rule in &self.rules {
+            rules.push(try!(rule.rebind(rebinder)));
+        }
 
-        let allocations = self.allocations.iter().map(|ref res| {
-            Resource {
-                devices: res.devices.iter().map(|ref device| rebinder.rebind_device(&device)).collect(),
-                phantom: PhantomData,
+        let mut allocations = Vec::with_capacity(self.allocations.len());
+        for res in &self.allocations {
+            let mut devices = Vec::with_capacity(res.devices.len());
+            for dev in &res.devices {
+                devices.push(try!(rebinder.rebind_device(&dev)));
             }
-        }).collect();
+            allocations.push(Resource {
+                devices: devices,
+                phantom: PhantomData,
+            });
+        }
 
-        let requirements = self.requirements.iter().map(|ref req| {
-            Arc::new(Requirement {
-                kind: rebinder.rebind_device_kind(&req.kind),
-                inputs: req.inputs.iter().map(|ref cap| rebinder.rebind_input_capability(cap)).collect(),
-                outputs: req.outputs.iter().map(|ref cap| rebinder.rebind_output_capability(cap)).collect(),
+        let mut requirements = Vec::with_capacity(self.requirements.len());
+        for req in &self.requirements {
+            let mut inputs = Vec::with_capacity(req.inputs.len());
+            for cap in &req.inputs {
+                inputs.push(try!(rebinder.rebind_input_capability(cap)));
+            }
+
+            let mut outputs = Vec::with_capacity(req.outputs.len());
+            for cap in &req.outputs {
+                outputs.push(try!(rebinder.rebind_output_capability(cap)));
+            }
+
+            requirements.push(Arc::new(Requirement {
+                kind: try!(rebinder.rebind_device_kind(&req.kind)),
+                inputs: inputs,
+                outputs: outputs,
                 min: req.min,
                 max: req.max,
                 phantom: PhantomData,
-            })
-        }).collect();
+            }));
+        }
 
-        Script {
+        Ok(Script {
             metadata: self.metadata.clone(),
             requirements: requirements,
             allocations: allocations,
             rules: rules,
-        }
+        })
     }
 }
 
 
 impl<Ctx, Dev> Trigger<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
-    fn rebind<R>(&self, rebinder: &R) -> Trigger<R::DestCtx, R::DestDev>
+    fn rebind<R>(&self, rebinder: &R) -> Result<Trigger<R::DestCtx, R::DestDev>, Error>
         where R: Rebinder<SourceDev = Dev, SourceCtx = Ctx>
     {
-        let execute = self.execute.iter().map(|ref ex| {
-            ex.rebind(rebinder)
-        }).collect();
-        Trigger {
+        let mut execute = Vec::with_capacity(self.execute.len());
+        for ex in &self.execute {
+            execute.push(try!(ex.rebind(rebinder)));
+        }
+        Ok(Trigger {
             cooldown: self.cooldown.clone(),
             execute: execute,
-            condition: self.condition.rebind(rebinder),
-        }
+            condition: try!(self.condition.rebind(rebinder)),
+        })
     }
 }
 
 impl<Ctx, Dev> Conjunction<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
-    fn rebind<R>(&self, rebinder: &R) -> Conjunction<R::DestCtx, R::DestDev>
+    fn rebind<R>(&self, rebinder: &R) -> Result<Conjunction<R::DestCtx, R::DestDev>, Error>
         where R: Rebinder<SourceDev = Dev, SourceCtx = Ctx>
     {
-        Conjunction {
-            all: self.all.iter().map(|c| c.rebind(rebinder)).collect(),
-            state: rebinder.rebind_condition(&self.state),
+        let mut all = Vec::with_capacity(self.all.len());
+        for c in &self.all {
+            all.push(try!(c.rebind(rebinder)));
         }
+        Ok(Conjunction {
+            all: all,
+            state: try!(rebinder.rebind_condition(&self.state)),
+        })
     }
 }
 
 
 impl<Ctx, Dev> Condition<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
-    fn rebind<R>(&self, rebinder: &R) -> Condition<R::DestCtx, R::DestDev>
+    fn rebind<R>(&self, rebinder: &R) -> Result<Condition<R::DestCtx, R::DestDev>, Error>
         where R: Rebinder<SourceDev = Dev, SourceCtx = Ctx>
     {
-        Condition {
+        Ok(Condition {
             range: self.range.clone(),
-            capability: rebinder.rebind_input_capability(&self.capability),
-            input: rebinder.rebind_input(&self.input),
-            state: rebinder.rebind_condition(&self.state),
-        }
+            capability: try!(rebinder.rebind_input_capability(&self.capability)),
+            input: try!(rebinder.rebind_input(&self.input)),
+            state: try!(rebinder.rebind_condition(&self.state)),
+        })
     }
 }
 
 
+
 impl<Ctx, Dev> Statement<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
-    fn rebind<R>(&self, rebinder: &R) -> Statement<R::DestCtx, R::DestDev>
+    fn rebind<R>(&self, rebinder: &R) -> Result<Statement<R::DestCtx, R::DestDev>, Error>
         where R: Rebinder<SourceDev = Dev, SourceCtx = Ctx>
     {
-            let arguments = self.arguments.iter().map(|(key, value)| {
-                (key.clone(), value.rebind(rebinder))
-            }).collect();
-            Statement {
-                destination: rebinder.rebind_output(&self.destination),
-                action: rebinder.rebind_output_capability(&self.action),
-                arguments: arguments
-            }
+        let mut arguments = HashMap::with_capacity(self.arguments.len());
+        for (key, value) in &self.arguments {
+            arguments.insert(key.clone(), try!(value.rebind(rebinder)));
         }
+        Ok(Statement {
+            destination: try!(rebinder.rebind_output(&self.destination)),
+            action: try!(rebinder.rebind_output_capability(&self.action)),
+            arguments: arguments
+        })
+    }
 }
 
-
 impl<Ctx, Dev> Expression<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
-    fn rebind<R>(&self, rebinder: &R) -> Expression<R::DestCtx, R::DestDev>
+    fn rebind<R>(&self, rebinder: &R) -> Result<Expression<R::DestCtx, R::DestDev>, Error>
         where R: Rebinder<SourceDev = Dev, SourceCtx = Ctx>
     {
-        use self::Expression::*;
         match *self {
-            Value(ref v) => Value(v.clone()),
-            Vec(ref v) => Vec(v.iter().map(|x| x.rebind(rebinder)).collect()),
+            Expression::Value(ref v) => Ok(Expression::Value(v.clone())),
+            Expression::Vec(ref v) => {
+                let mut v2 = Vec::with_capacity(v.len());
+                for x in v {
+                    v2.push(try!(x.rebind(rebinder)));
+                }
+                Ok(Expression::Vec(v2))
+            }
             //            Input(ref input) => Input(rebinder.rebind_input(input).clone()),
-            Input(_) => panic!("Not impl implemented yet")
+            Expression::Input(_) => panic!("Not impl implemented yet")
         }
     }
 }
@@ -684,54 +718,54 @@ impl<'a, Dev> Rebinder for Precompiler<'a, Dev>
 
     // Rebinding the device access. Nothing to do.
     fn rebind_device(&self, dev: &<<Self as Rebinder>::SourceDev as DeviceAccess>::Device) ->
-        <<Self as Rebinder>::DestDev as DeviceAccess>::Device
+        Result<<<Self as Rebinder>::DestDev as DeviceAccess>::Device, Error>
     {
-        dev.clone()
+        Ok(dev.clone())
     }
 
 
     fn rebind_device_kind(&self, kind: &<<Self as Rebinder>::SourceDev as DeviceAccess>::DeviceKind) ->
-        <<Self as Rebinder>::DestDev as DeviceAccess>::DeviceKind
+        Result<<<Self as Rebinder>::DestDev as DeviceAccess>::DeviceKind, Error>
     {
-        (*kind).clone()
+        Ok((*kind).clone())
     }
     
     fn rebind_input_capability(&self, cap: &<<Self as Rebinder>::SourceDev as DeviceAccess>::InputCapability) ->
-        <<Self as Rebinder>::DestDev as DeviceAccess>::InputCapability
+        Result<<<Self as Rebinder>::DestDev as DeviceAccess>::InputCapability, Error>
     {
-        (*cap).clone()
+        Ok((*cap).clone())
     }
 
     fn rebind_output_capability(&self, cap: &<<Self as Rebinder>::SourceDev as DeviceAccess>::OutputCapability) ->
-        <<Self as Rebinder>::DestDev as DeviceAccess>::OutputCapability
+        Result<<<Self as Rebinder>::DestDev as DeviceAccess>::OutputCapability, Error>
     {
-        (*cap).clone()
+        Ok((*cap).clone())
     }
 
     // Recinding the context
     fn rebind_condition(&self, state: &<<Self as Rebinder>::SourceCtx as Context>::ConditionState) ->
-        <<Self as Rebinder>::DestCtx as Context>::ConditionState
+        Result<<<Self as Rebinder>::DestCtx as Context>::ConditionState, Error>
     {
         // By default, conditions are not met.
-        false
+        Ok(false)
     }
 
     fn rebind_input(&self, index: &<<Self as Rebinder>::SourceCtx as Context>::InputSet) ->
-        <<Self as Rebinder>::DestCtx as Context>::InputSet
+        Result<<<Self as Rebinder>::DestCtx as Context>::InputSet, Error>
     {
         match self.inputs[*index] {
-            None => panic!("We should handle this without panicking"),
-            Some(ref input) => input.clone()
+            None => Err(Error::CompilationError),
+            Some(ref input) => Ok(input.clone())
         }
     }
 
 
     fn rebind_output(&self, index: &<<Self as Rebinder>::SourceCtx as Context>::OutputSet) ->
-        <<Self as Rebinder>::DestCtx as Context>::OutputSet
+        Result<<<Self as Rebinder>::DestCtx as Context>::OutputSet, Error>
     {
         match self.outputs[*index] {
-            None => panic!("We should handle this without panicking"),
-            Some(ref output) => output.clone()
+            None => Err(Error::CompilationError),
+            Some(ref output) => Ok(output.clone())
         }
     }
 }

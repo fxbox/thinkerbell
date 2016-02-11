@@ -6,7 +6,7 @@
 /// The environment in which the code is meant to be executed.
 /// This can be instantiated either with actual bindings to
 /// devices, or with a unit-testing framework.
-pub trait Bindings {
+pub trait DeviceAccess {
     type DeviceKind;
     type Device: Clone;
     type InputCapability;

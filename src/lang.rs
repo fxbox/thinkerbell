@@ -9,7 +9,8 @@
 /// complex monitors can installed from the web from a master device
 /// (i.e. the user's cellphone or smart tv).
 
-use dependencies::{DeviceAccess, OutputCapability, Range, Value, Watcher};
+use dependencies::{DeviceAccess, Watcher};
+use values::{Value, Range};
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock}; // FIXME: Investigate if we really need so many instances of Arc. I suspect that most can be replaced by &'a.

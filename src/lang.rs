@@ -327,18 +327,17 @@ impl<Ctx, Dev> ExecutionTask<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
 ///
 /// # Evaluating conditions
 ///
-/*
-impl<Ctx, Dev> Trigger<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
+impl<Dev> Trigger<CompiledCtx<Dev>, Dev> where Dev: DeviceAccess {
     fn is_met(&mut self) -> IsMet {
         self.condition.is_met()
     }
 }
 
-impl<Ctx, Dev> Conjunction<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
+
+impl<Dev> Conjunction<CompiledCtx<Dev>, Dev> where Dev: DeviceAccess {
     /// For a conjunction to be true, all its components must be true.
     fn is_met(&mut self) -> IsMet {
-        let &mut is_met = Dev::condition_is_met(&mut self.state);
-        let old = is_met;
+        let old = self.state.is_met;
         let mut new = true;
 
         for mut single in &mut self.all {
@@ -348,14 +347,14 @@ impl<Ctx, Dev> Conjunction<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
                 // `is_met` of all individual conditions.
             }
         }
-        is_met = new;
+        self.state.is_met = new;
         IsMet {
             old: old,
             new: new,
         }
     }
 }
- */
+
 
 impl<Dev> Condition<CompiledCtx<Dev>, Dev> where Dev: DeviceAccess {
     /// Determine if one of the devices serving as input for this

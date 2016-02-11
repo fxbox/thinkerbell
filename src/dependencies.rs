@@ -11,18 +11,25 @@ pub trait DeviceAccess {
     type Device: Clone;
     type InputCapability: Clone;
     type OutputCapability: Clone;
-    type Watcher: Watcher;
+    type Watcher: Watcher + Watcher<Device=Self::Device, InputCapability=Self::InputCapability>;
+
+    fn get_device_kind(&self, &String) -> Option<Self::DeviceKind>;
+    fn get_device(&self, &String) -> Option<Self::Device>;
+    fn get_input_capability(&self, &String) -> Option<Self::InputCapability>;
+    fn get_output_capability(&self, &String) -> Option<Self::OutputCapability>;
 }
 
 /// An object that may be used to track state changes in devices.
 pub trait Watcher {
     type Witness;
+    type Device;
+    type InputCapability;
     fn new() -> Self;
 
     /// Watch a property of a device.
     fn add<F>(&mut self,
-              device: &Device,
-              input: &InputCapability,
+              device: &Self::Device,
+              input: &Self::InputCapability,
               condition: &Range,
               cb: F) -> Self::Witness where F:FnOnce(Value);
 }

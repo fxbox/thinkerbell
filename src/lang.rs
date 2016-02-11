@@ -9,7 +9,7 @@
 /// complex monitors can installed from the web from a master device
 /// (i.e. the user's cellphone or smart tv).
 
-use dependencies::{DeviceAccess, DeviceKind, InputCapability, OutputCapability, Device, Range, Value, Watcher};
+use dependencies::{DeviceAccess, OutputCapability, Range, Value, Watcher};
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock}; // FIXME: Investigate if we really need so many instances of Arc. I suspect that most can be replaced by &'a.
@@ -618,6 +618,22 @@ impl DeviceAccess for UncheckedDev {
     type InputCapability = String;
     type OutputCapability = String;
     type Watcher = FakeWatcher;
+
+    fn get_device_kind(&self, key: &String) -> Option<String> {
+        Some(key.clone())
+    }
+
+    fn get_device(&self, key: &String) -> Option<String> {
+        Some(key.clone())
+    }
+
+    fn get_input_capability(&self, key: &String) -> Option<String> {
+        Some(key.clone())
+    }
+
+    fn get_output_capability(&self, key: &String) -> Option<String> {
+        Some(key.clone())
+    }
 }
 
 struct CompiledCtx<DeviceAccess> {
@@ -646,13 +662,16 @@ impl<Dev> Context for CompiledCtx<Dev> where Dev: DeviceAccess {
 struct FakeWatcher;
 impl Watcher for FakeWatcher {
     type Witness = ();
+    type Device = String;
+    type InputCapability = String;
+
     fn new() -> FakeWatcher {
         panic!("Cannot instantiate a FakeWatcher");
     }
 
     fn add<F>(&mut self,
-              device: &Device,
-              input: &InputCapability,
+              device: &Self::Device,
+              input: &Self::InputCapability,
               condition: &Range,
               cb: F) -> () where F:FnOnce(Value)
     {

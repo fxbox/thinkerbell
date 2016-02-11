@@ -6,28 +6,18 @@
 /// The environment in which the code is meant to be executed.
 /// This can be instantiated either with actual bindings to
 /// devices, or with a unit-testing framework.
-trait Environment {
+pub trait Environment {
     type Input;
     type Output;
     type ConditionState;
-    type Device;
+    type Device: Clone;
     type InputCapability;
     type OutputCapability;
     type Watcher: Watcher;
 }
 
-trait ExecutionEnvironment: Environment {
-    fn condition_is_met<'a>(&'a mut Self::ConditionState) -> &'a IsMet;
-}
-
-struct IsMet {
-    old: bool,
-    new: bool,
-}
-
-
 /// An object that may be used to track state changes in devices.
-trait Watcher {
+pub trait Watcher {
     type Witness;
     fn new() -> Self;
 

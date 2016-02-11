@@ -9,7 +9,7 @@
 /// complex monitors can installed from the web from a master device
 /// (i.e. the user's cellphone or smart tv).
 
-use dependencies::{Environment, ExecutionEnvironment, IsMet, DeviceKind, InputCapability, OutputCapability, Device, Range, Value, Watcher};
+use dependencies::{Environment, DeviceKind, InputCapability, OutputCapability, Device, Range, Value, Watcher};
 
 use std::collections::HashMap;
 use std::sync::{Arc, RwLock}; // FIXME: Investigate if we really need so many instances of Arc.
@@ -58,8 +58,6 @@ pub struct Script<Env> where Env: Environment {
 
 struct Resource<Env> where Env: Environment {
     devices: Vec<Env::Device>,
-    sensor: Option<Env::Input>,
-    effector: Option<Env::Output>,
 }
 
 
@@ -118,7 +116,7 @@ struct Conjunction<Env> where Env: Environment {
 /// A condition is true if *any* of the sensors allocated to this
 /// requirement has yielded a value that is in the given range.
 struct Condition<Env> where Env: Environment {
-    input: Env::Input,
+    input: Env::Input, // FIXME: Well, is this a single device or many?
     capability: Env::InputCapability,
     range: Range,
     state: Env::ConditionState,
@@ -173,6 +171,20 @@ struct ExecutionTask<Env> where Env: ExecutionEnvironment {
     rx: Receiver<ExecutionOp>,
 }
 
+trait ExecInput {
+}
+
+trait ExecutionEnvironment: Environment {
+    type ExecInput: ExecInput;
+    fn condition_is_met<'a>(&'a mut Self::ConditionState) -> &'a mut bool;
+
+    fn get_inputs<'a>(input: &'a mut <Self as Environment>::Input) -> &'a mut Vec<<Self as ExecutionEnvironment>::ExecInput>;
+}
+
+struct IsMet {
+    old: bool,
+    new: bool,
+}
 
 
 enum ExecutionOp {
@@ -191,6 +203,8 @@ impl<Env> ExecutionTask<Env> where Env: ExecutionEnvironment {
     /// The caller is responsible for spawning a new thread and
     /// calling `run()`.
     fn new(script: &Script<UncheckedEnv>) -> Self {
+        panic!("Not implemented");
+/*
         // Prepare the script for execution:
         // - replace instances of Input with InputEnv, which map
         //   to a specific device and cache the latest known value
@@ -205,6 +219,7 @@ impl<Env> ExecutionTask<Env> where Env: ExecutionEnvironment {
             rx: rx,
             tx: tx
         }
+*/
     }
 
     /// Get a channel that may be used to send commands to the task.
@@ -215,6 +230,8 @@ impl<Env> ExecutionTask<Env> where Env: ExecutionEnvironment {
     /// Execute the monitoring task.
     /// This currently expects to be executed in its own thread.
     fn run(&mut self) {
+        panic!("Not implemented");
+        /*
         let mut watcher = Env::Watcher::new();
         let mut witnesses = Vec::new();
 
@@ -296,13 +313,14 @@ impl<Env> ExecutionTask<Env> where Env: ExecutionEnvironment {
                 }
             }
         }
+*/
     }
 }
 
 ///
 /// # Evaluating conditions
 ///
-
+/*
 impl<Env> Trigger<Env> where Env: ExecutionEnvironment {
     fn is_met(&mut self) -> IsMet {
         self.condition.is_met()
@@ -312,7 +330,8 @@ impl<Env> Trigger<Env> where Env: ExecutionEnvironment {
 impl<Env> Conjunction<Env> where Env: ExecutionEnvironment {
     /// For a conjunction to be true, all its components must be true.
     fn is_met(&mut self) -> IsMet {
-        let old = self.state.is_met.clone();
+        let &mut is_met = Env::condition_is_met(&mut self.state);
+        let old = is_met;
         let mut new = true;
 
         for mut single in &mut self.all {
@@ -322,7 +341,7 @@ impl<Env> Conjunction<Env> where Env: ExecutionEnvironment {
                 // `is_met` of all individual conditions.
             }
         }
-        self.state.is_met = new;
+        is_met = new;
         IsMet {
             old: old,
             new: new,
@@ -334,9 +353,10 @@ impl<Env> Condition<Env> where Env: ExecutionEnvironment {
     /// Determine if one of the devices serving as input for this
     /// condition meets the condition.
     fn is_met(&mut self) -> IsMet {
-        let old = self.state.is_met.clone();
+        let &mut is_met = Env::condition_is_met(&mut self.state);
+        let old = is_met;
         let mut new = false;
-        for single in &*self.input {
+        for single in Env::get_inputs(&mut self.input) {
             // This will fail only if the thread has already panicked.
             let state = single.state.read().unwrap();
             let is_met = match *state {
@@ -383,20 +403,24 @@ impl<Env> Condition<Env> where Env: ExecutionEnvironment {
         }
     }
 }
-
+*/
 ///
 /// # Changing the kind of variable used.
 ///
 
 trait Rebinder {
-    type SourceEnv;
-    type DestEnv;
-    fn alloc_input(&self, &<<Self as Rebinder>::SourceEnv as Environment>::Input) -> <<Self as Rebinder>::DestEnv as Environment>::Input;
-    fn alloc_output(&self, &<<Self as Rebinder>::SourceEnv as Environment>::Output) -> <<Self as Rebinder>::DestEnv as Environment>::Output;
-    fn alloc_condition(&self, &<<Self as Rebinder>::SourceEnv as Environment>::ConditionState) -> <<Self as Rebinder>::DestEnv as Environment>::ConditionState;
+    type SourceEnv: Environment;
+    type DestEnv: Environment;
+    fn alloc_input(&self, &<<Self as Rebinder>::SourceEnv as Environment>::Input) ->
+        <<Self as Rebinder>::DestEnv as Environment>::Input;
+    fn alloc_output(&self, &<<Self as Rebinder>::SourceEnv as Environment>::Output) ->
+        <<Self as Rebinder>::DestEnv as Environment>::Output;
+    fn alloc_condition(&self, &<<Self as Rebinder>::SourceEnv as Environment>::ConditionState) ->
+        <<Self as Rebinder>::DestEnv as Environment>::ConditionState;
 }
 
-impl<Env> Script<Env> {
+/*
+impl<Env> Script<Env> where Env: Environment {
     fn rebind<R>(&self, rebinder: &R) -> Script<R::DestEnv>
         where R: Rebinder<SourceEnv = Env>
     {
@@ -407,8 +431,6 @@ impl<Env> Script<Env> {
         let allocations = self.allocations.iter().map(|ref res| {
             Resource {
                 devices: res.devices.clone(),
-                sensor: res.sensor.as_ref().map(|ref old| rebinder.alloc_input(old).clone()),
-                effector: res.effector.as_ref().map(|ref old| rebinder.alloc_output(old).clone()),
             }
         }).collect();
 
@@ -421,7 +443,7 @@ impl<Env> Script<Env> {
     }
 }
 
-impl<Env> Trigger<Env> {
+impl<Env> Trigger<Env> where Env: Environment {
     fn rebind<R>(&self, rebinder: &R) -> Trigger<R::DestEnv>
         where R: Rebinder<SourceEnv = Env>
     {
@@ -437,7 +459,7 @@ impl<Env> Trigger<Env> {
 }
 
 
-impl<Env> Conjunction<Env> {
+impl<Env> Conjunction<Env> where Env: Environment {
     fn rebind<R>(&self, rebinder: &R) -> Conjunction<R::DestEnv>
         where R: Rebinder<SourceEnv = Env>
     {
@@ -448,7 +470,7 @@ impl<Env> Conjunction<Env> {
     }
 }
 
-impl<Env> Condition<Env> {
+impl<Env> Condition<Env> where Env: Environment {
     fn rebind<R>(&self, rebinder: &R) -> Condition<R::DestEnv>
         where R: Rebinder<SourceEnv = Env>
     {
@@ -461,7 +483,7 @@ impl<Env> Condition<Env> {
     }
 }
 
-impl<Env> Statement<Env> {
+impl<Env> Statement<Env> where Env: Environment {
     fn rebind<R>(&self, rebinder: &R) -> Statement<R::DestEnv>
         where R: Rebinder<SourceEnv = Env>
     {
@@ -476,7 +498,9 @@ impl<Env> Statement<Env> {
         }
 }
 
-impl<Env> Expression<Env> {
+ */
+
+impl<Env> Expression<Env> where Env: Environment {
     fn rebind<R>(&self, rebinder: &R) -> Expression<R::DestEnv>
         where R: Rebinder<SourceEnv = Env>
     {
@@ -527,8 +551,8 @@ impl Watcher for FakeWatcher {
 
 /*
 impl Environment for CompiledEnv {
-    type Input = Arc<InputEnv>;
-    type Output = Arc<OutputEnv>;
+    type Input = Vector<Arc<InputEnv>>;
+    type Output = Vector<Arc<OutputEnv>>;
     type ConditionState = ConditionEnv;
     type Device = Device;
     type InputCapability = InputCapability;
@@ -566,24 +590,38 @@ struct ConditionEnv {
     is_met: bool
 }
 
-struct Precompiler<'a, DestEnv>
-    where DestEnv: ExecutionEnvironment {
+struct Precompiler<'a, CompiledEnv> {
     script: &'a Script<UncheckedEnv>,
-    phantom: PhantomData<DestEnv>,
+    phantom: PhantomData<CompiledEnv>,
 }
 
 impl<'a, DestEnv> Precompiler<'a, DestEnv> where DestEnv: ExecutionEnvironment {
     fn new(source: &'a Script<UncheckedEnv>) -> Self {
         Precompiler {
-            script: source
+            script: source,
+            phantom: PhantomData
         }
     }
 }
+
+/*
 impl<'a, DestEnv> Rebinder for Precompiler<'a, DestEnv>
     where DestEnv: ExecutionEnvironment {
     type DestEnv = DestEnv;
     type SourceEnv = UncheckedEnv;
-    fn alloc_input(&self, &input: &usize) -> Arc<InputEnv> {
+
+    fn alloc_input(&self, &input: &usize) ->
+    // Must be DestEnv::InputEnv
+    // Must be parameterized by an actual implementation of Env
+    {
+    }
+    
+    fn alloc_input(&self, &input: &usize) -> DestEnv::InputEnv {
+        
+    }
+
+    // FIXME: Er, what? That's never going to actually share anything!
+    fn alloc_input(&self, &input: &usize) -> Arc<DestEnv::InputEnv> {
         Arc::new(
             self.script.allocations[input].devices.iter().map(|device| {
                 SingleInputEnv {
@@ -608,7 +646,7 @@ impl<'a, DestEnv> Rebinder for Precompiler<'a, DestEnv>
         }
     }
 }
-
+ */
 /*
 impl Script {
     ///

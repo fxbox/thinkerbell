@@ -8,9 +8,6 @@
 /// devices, or with a unit-testing framework.
 pub trait Environment {
     type DeviceKind;
-    type Input;
-    type Output;
-    type ConditionState;
     type Device: Clone;
     type InputCapability;
     type OutputCapability;

@@ -38,7 +38,7 @@ use self::rustc_serialize::json::Json;
 /// Monitor applications are installed from a paired device. They may
 /// either be part of a broader application (which can install them
 /// through a web/REST API) or live on their own.
-pub struct Script<Env> where Env: Environment {
+pub struct Script<Ctx, Env> where Env: Environment, Ctx: Context {
     /// Authorization, author, description, update url, version, ...
     metadata: (), // FIXME: Implement
 
@@ -47,23 +47,24 @@ pub struct Script<Env> where Env: Environment {
     /// UX. Re-allocating resources may be requested by the user, the
     /// foxbox, or an application, e.g. when replacing a device or
     /// upgrading the app.
-    requirements: Vec<Arc<Requirement<Env>>>,
+    requirements: Vec<Arc<Requirement<Ctx, Env>>>,
 
     /// Resources actually allocated for each requirement.
-    allocations: Vec<Resource<Env>>,
+    allocations: Vec<Resource<Ctx, Env>>,
 
     /// A set of rules, stating what must be done in which circumstance.
-    rules: Vec<Trigger<Env>>,
+    rules: Vec<Trigger<Ctx, Env>>,
 }
 
-struct Resource<Env> where Env: Environment {
+struct Resource<Ctx, Env> where Env: Environment, Ctx: Context {
     devices: Vec<Env::Device>,
+    phantom: PhantomData<Ctx>,
 }
 
 
 /// A resource needed by this application. Typically, a definition of
 /// device with some input our output capabilities.
-struct Requirement<Env> where Env: Environment {
+struct Requirement<Ctx, Env> where Env: Environment, Ctx: Context {
     /// The kind of resource, e.g. "a flashbulb".
     kind: Env::DeviceKind,
 
@@ -83,17 +84,18 @@ struct Requirement<Env> where Env: Environment {
     /// unspecified in the script, this is the same as `min`.
     max: u32,
 
+    phantom: PhantomData<Ctx>,
     // FIXME: We may need cooldown properties.
 }
 
 /// A single trigger, i.e. "when some condition becomes true, do
 /// something".
-struct Trigger<Env> where Env: Environment {
+struct Trigger<Ctx, Env> where Env: Environment, Ctx: Context {
     /// The condition in which to execute the trigger.
-    condition: Conjunction<Env>,
+    condition: Conjunction<Ctx, Env>,
 
     /// Stuff to do once `condition` is met.
-    execute: Vec<Statement<Env>>,
+    execute: Vec<Statement<Ctx, Env>>,
 
     /// Minimal duration between two executions of the trigger.  If a
     /// duration was not picked by the developer, a reasonable default
@@ -102,10 +104,10 @@ struct Trigger<Env> where Env: Environment {
 }
 
 /// A conjunction (e.g. a "and") of conditions.
-struct Conjunction<Env> where Env: Environment {
+struct Conjunction<Ctx, Env> where Env: Environment, Ctx: Context {
     /// The conjunction is true iff all of the following expressions evaluate to true.
-    all: Vec<Condition<Env>>,
-    state: Env::ConditionState,
+    all: Vec<Condition<Ctx, Env>>,
+    state: Ctx::ConditionState,
 }
 
 /// An individual condition.
@@ -115,45 +117,45 @@ struct Conjunction<Env> where Env: Environment {
 ///
 /// A condition is true if *any* of the sensors allocated to this
 /// requirement has yielded a value that is in the given range.
-struct Condition<Env> where Env: Environment {
-    input: Env::Input, // FIXME: Well, is this a single device or many?
+struct Condition<Ctx, Env> where Env: Environment, Ctx: Context {
+    input: Ctx::Input, // FIXME: Well, is this a single device or many?
     capability: Env::InputCapability,
     range: Range,
-    state: Env::ConditionState,
+    state: Ctx::ConditionState,
 }
 
 
 /// Stuff to actually do. In practice, this means placing calls to devices.
-struct Statement<Env> where Env: Environment {
+struct Statement<Ctx, Env> where Env: Environment, Ctx: Context {
     /// The resource to which this command applies.  e.g. "all
     /// heaters", "a single communication channel", etc.
-    destination: Env::Output,
+    destination: Ctx::Output,
 
     /// The action to execute on the resource.
     action: Env::OutputCapability,
 
     /// Data to send to the resource.
-    arguments: HashMap<String, Expression<Env>>
+    arguments: HashMap<String, Expression<Ctx, Env>>
 }
 
-struct InputSet<Env> where Env: Environment {
+struct InputSet<Ctx, Env> where Env: Environment, Ctx: Context {
     /// The set of inputs from which to grab the value.
-    condition: Condition<Env>,
+    condition: Condition<Ctx, Env>,
     /// The value to grab.
     capability: Env::InputCapability,
 }
 
 /// A value that may be sent to an output.
-enum Expression<Env> where Env: Environment {
+enum Expression<Ctx, Env> where Env: Environment, Ctx: Context {
     /// A dynamic value, which must be read from one or more inputs.
     // FIXME: Not ready yet
-    Input(InputSet<Env>),
+    Input(InputSet<Ctx, Env>),
 
     /// A constant value.
     Value(Value),
 
     /// More than a single value.
-    Vec(Vec<Expression<Env>>)
+    Vec(Vec<Expression<Ctx, Env>>)
 }
 
 ///
@@ -162,9 +164,9 @@ enum Expression<Env> where Env: Environment {
 
 /// A script ready to be executed.
 /// Each script is meant to be executed in an individual thread.
-struct ExecutionTask<Env> where Env: Environment {
+struct ExecutionTask<Ctx, Env> where Env: Environment, Ctx: Context {
     /// The current state of execution the script.
-    state: Script<Env>,
+    state: Script<Ctx, Env>,
 
     /// Communicating with the thread running script.
     tx: Sender<ExecutionOp>,
@@ -200,12 +202,12 @@ enum ExecutionOp {
 }
 
 
-impl<Env> ExecutionTask<Env> where Env: Environment {
+impl<Ctx, Env> ExecutionTask<Ctx, Env> where Env: Environment, Ctx: Context {
     /// Create a new execution task.
     ///
     /// The caller is responsible for spawning a new thread and
     /// calling `run()`.
-    fn new(script: &Script<UncheckedEnv>) -> Self {
+    fn new(script: &Script<UncheckedEnv, UncheckedCtx>) -> Self {
         panic!("Not implemented");
 /*
         // Prepare the script for execution:
@@ -324,13 +326,13 @@ impl<Env> ExecutionTask<Env> where Env: Environment {
 /// # Evaluating conditions
 ///
 /*
-impl<Env> Trigger<Env> where Env: Environment {
+impl<Ctx, Env> Trigger<Ctx, Env> where Env: Environment, Ctx: Context {
     fn is_met(&mut self) -> IsMet {
         self.condition.is_met()
     }
 }
 
-impl<Env> Conjunction<Env> where Env: Environment {
+impl<Ctx, Env> Conjunction<Ctx, Env> where Env: Environment, Ctx: Context {
     /// For a conjunction to be true, all its components must be true.
     fn is_met(&mut self) -> IsMet {
         let &mut is_met = Env::condition_is_met(&mut self.state);
@@ -352,7 +354,7 @@ impl<Env> Conjunction<Env> where Env: Environment {
     }
 }
 
-impl<Env> Condition<Env> where Env: Environment {
+impl<Ctx, Env> Condition<Ctx, Env> where Env: Environment, Ctx: Context {
     /// Determine if one of the devices serving as input for this
     /// condition meets the condition.
     fn is_met(&mut self) -> IsMet {
@@ -415,39 +417,44 @@ impl<Env> Condition<Env> where Env: Environment {
 /// strings or numbers into code in which they are represented by
 /// concrete data structures.
 trait Rebinder {
+    type SourceCtx: Context;
+    type DestCtx: Context;
     type SourceEnv: Environment;
     type DestEnv: Environment;
 
+    // Rebinding the environment
     fn rebind_device(&self, &<<Self as Rebinder>::SourceEnv as Environment>::Device) ->
         <<Self as Rebinder>::DestEnv as Environment>::Device;
     fn rebind_device_kind(&self, &<<Self as Rebinder>::SourceEnv as Environment>::DeviceKind) ->
         <<Self as Rebinder>::DestEnv as Environment>::DeviceKind;
-        
-    fn rebind_input(&self, &<<Self as Rebinder>::SourceEnv as Environment>::Input) ->
-        <<Self as Rebinder>::DestEnv as Environment>::Input;
     fn rebind_input_capability(&self, &<<Self as Rebinder>::SourceEnv as Environment>::InputCapability) ->
         <<Self as Rebinder>::DestEnv as Environment>::InputCapability;
-
-    fn rebind_output(&self, &<<Self as Rebinder>::SourceEnv as Environment>::Output) ->
-        <<Self as Rebinder>::DestEnv as Environment>::Output;
     fn rebind_output_capability(&self, &<<Self as Rebinder>::SourceEnv as Environment>::OutputCapability) ->
         <<Self as Rebinder>::DestEnv as Environment>::OutputCapability;
 
-    fn rebind_condition(&self, &<<Self as Rebinder>::SourceEnv as Environment>::ConditionState) ->
-        <<Self as Rebinder>::DestEnv as Environment>::ConditionState;
+    // Recinding the context
+    fn rebind_input(&self, &<<Self as Rebinder>::SourceCtx as Context>::Input) ->
+        <<Self as Rebinder>::DestCtx as Context>::Input;
+
+    fn rebind_output(&self, &<<Self as Rebinder>::SourceCtx as Context>::Output) ->
+        <<Self as Rebinder>::DestCtx as Context>::Output;
+
+    fn rebind_condition(&self, &<<Self as Rebinder>::SourceCtx as Context>::ConditionState) ->
+        <<Self as Rebinder>::DestCtx as Context>::ConditionState;
 }
 
-impl<Env> Script<Env> where Env: Environment {
-    fn rebind<R>(&self, rebinder: &R) -> Script<R::DestEnv>
-        where R: Rebinder<SourceEnv = Env>
+impl<Ctx, Env> Script<Ctx, Env> where Env: Environment, Ctx: Context {
+    fn rebind<R>(&self, rebinder: &R) -> Script<R::DestCtx, R::DestEnv>
+        where R: Rebinder<SourceEnv = Env, SourceCtx = Ctx>
     {
-        let rules: Vec<Trigger<R::DestEnv>> = self.rules.iter().map(|ref rule| {
+        let rules = self.rules.iter().map(|ref rule| {
             rule.rebind(rebinder)
         }).collect();
 
-        let allocations: Vec<Resource<R::DestEnv>> = self.allocations.iter().map(|ref res| {
+        let allocations = self.allocations.iter().map(|ref res| {
             Resource {
                 devices: res.devices.iter().map(|ref device| rebinder.rebind_device(&device)).collect(),
+                phantom: PhantomData,
             }
         }).collect();
 
@@ -458,6 +465,7 @@ impl<Env> Script<Env> where Env: Environment {
                 outputs: req.outputs.iter().map(|ref cap| rebinder.rebind_output_capability(cap)).collect(),
                 min: req.min,
                 max: req.max,
+                phantom: PhantomData,
             })
         }).collect();
 
@@ -471,9 +479,9 @@ impl<Env> Script<Env> where Env: Environment {
 }
 
 
-impl<Env> Trigger<Env> where Env: Environment {
-    fn rebind<R>(&self, rebinder: &R) -> Trigger<R::DestEnv>
-        where R: Rebinder<SourceEnv = Env>
+impl<Ctx, Env> Trigger<Ctx, Env> where Env: Environment, Ctx: Context {
+    fn rebind<R>(&self, rebinder: &R) -> Trigger<R::DestCtx, R::DestEnv>
+        where R: Rebinder<SourceEnv = Env, SourceCtx = Ctx>
     {
         let execute = self.execute.iter().map(|ref ex| {
             ex.rebind(rebinder)
@@ -486,9 +494,9 @@ impl<Env> Trigger<Env> where Env: Environment {
     }
 }
 
-impl<Env> Conjunction<Env> where Env: Environment {
-    fn rebind<R>(&self, rebinder: &R) -> Conjunction<R::DestEnv>
-        where R: Rebinder<SourceEnv = Env>
+impl<Ctx, Env> Conjunction<Ctx, Env> where Env: Environment, Ctx: Context {
+    fn rebind<R>(&self, rebinder: &R) -> Conjunction<R::DestCtx, R::DestEnv>
+        where R: Rebinder<SourceEnv = Env, SourceCtx = Ctx>
     {
         Conjunction {
             all: self.all.iter().map(|c| c.rebind(rebinder)).collect(),
@@ -498,9 +506,9 @@ impl<Env> Conjunction<Env> where Env: Environment {
 }
 
 
-impl<Env> Condition<Env> where Env: Environment {
-    fn rebind<R>(&self, rebinder: &R) -> Condition<R::DestEnv>
-        where R: Rebinder<SourceEnv = Env>
+impl<Ctx, Env> Condition<Ctx, Env> where Env: Environment, Ctx: Context {
+    fn rebind<R>(&self, rebinder: &R) -> Condition<R::DestCtx, R::DestEnv>
+        where R: Rebinder<SourceEnv = Env, SourceCtx = Ctx>
     {
         Condition {
             range: self.range.clone(),
@@ -512,9 +520,9 @@ impl<Env> Condition<Env> where Env: Environment {
 }
 
 
-impl<Env> Statement<Env> where Env: Environment {
-    fn rebind<R>(&self, rebinder: &R) -> Statement<R::DestEnv>
-        where R: Rebinder<SourceEnv = Env>
+impl<Ctx, Env> Statement<Ctx, Env> where Env: Environment, Ctx: Context {
+    fn rebind<R>(&self, rebinder: &R) -> Statement<R::DestCtx, R::DestEnv>
+        where R: Rebinder<SourceEnv = Env, SourceCtx = Ctx>
     {
             let arguments = self.arguments.iter().map(|(key, value)| {
                 (key.clone(), value.rebind(rebinder))
@@ -528,9 +536,9 @@ impl<Env> Statement<Env> where Env: Environment {
 }
 
 
-impl<Env> Expression<Env> where Env: Environment {
-    fn rebind<R>(&self, rebinder: &R) -> Expression<R::DestEnv>
-        where R: Rebinder<SourceEnv = Env>
+impl<Ctx, Env> Expression<Ctx, Env> where Env: Environment, Ctx: Context {
+    fn rebind<R>(&self, rebinder: &R) -> Expression<R::DestCtx, R::DestEnv>
+        where R: Rebinder<SourceEnv = Env, SourceCtx = Ctx>
     {
         use self::Expression::*;
         match *self {
@@ -546,33 +554,37 @@ impl<Env> Expression<Env> where Env: Environment {
 ///
 /// # Precompilation
 ///
-
-struct UncheckedEnv;
-impl Environment for UncheckedEnv {
+pub trait Context {
+    type Input;
+    type Output;
+    type ConditionState;
+}
+struct UncheckedCtx;
+impl Context for UncheckedCtx {
     type Input = usize;
     type Output = usize;
     type ConditionState = ();
-    type Device = Device; // FIXME: String?
-    type DeviceKind = DeviceKind; // FIXME: String?
-    type InputCapability = InputCapability; // FIXME: String?
-    type OutputCapability = OutputCapability; // FIXME: String?
+}
+
+struct UncheckedEnv;
+impl Environment for UncheckedEnv {
+    type Device = String;
+    type DeviceKind = String;
+    type InputCapability = String;
+    type OutputCapability = String;
     type Watcher = FakeWatcher;
 }
 
-struct CompiledEnv<Env> {
-    phantom: PhantomData<Env>,
+struct CompiledEnv<Ctx, Env> {
+    phantom: PhantomData<(Ctx, Env)>,
 }
 
-impl<Env> Environment for CompiledEnv<Env> where Env: Environment {
-    type Input = Env::Input;
-    type Output = Env::Output;
+impl<Ctx, Env> Environment for CompiledEnv<Ctx, Env> where Env: Environment, Ctx: Context {
     type Device = Env::Device;
     type DeviceKind = Env::DeviceKind;
     type InputCapability = Env::InputCapability;
     type OutputCapability = Env::OutputCapability;
     type Watcher = Env::Watcher;
-
-    type ConditionState = bool;
 }
 
 struct FakeWatcher;
@@ -633,12 +645,13 @@ struct ConditionEnv {
     is_met: bool
 }
 
+/*
 struct Precompiler<'a, CompiledEnv> {
     script: &'a Script<UncheckedEnv>,
     phantom: PhantomData<CompiledEnv>,
 }
 
-impl<'a, DestEnv> Precompiler<'a, DestEnv> where DestEnv: Environment {
+impl<'a, DestEnv> Precompiler<'a, DestEnv> where DestEnv: Environment, Ctx: Context {
     fn new(source: &'a Script<UncheckedEnv>) -> Self {
         Precompiler {
             script: source,
@@ -646,25 +659,25 @@ impl<'a, DestEnv> Precompiler<'a, DestEnv> where DestEnv: Environment {
         }
     }
 }
-
+*/
 /*
 impl<'a, DestEnv> Rebinder for Precompiler<'a, DestEnv>
-    where DestEnv: Environment {
+    where DestEnv: Environment, Ctx: Context {
     type DestEnv = DestEnv;
     type SourceEnv = UncheckedEnv;
 
     fn rebind_input(&self, &input: &usize) ->
-    // Must be DestEnv::InputEnv
+    // Must be DestCtx::InputEnv
     // Must be parameterized by an actual implementation of Env
     {
     }
     
-    fn rebind_input(&self, &input: &usize) -> DestEnv::InputEnv {
+    fn rebind_input(&self, &input: &usize) -> DestCtx::InputEnv {
         
     }
 
     // FIXME: Er, what? That's never going to actually share anything!
-    fn rebind_input(&self, &input: &usize) -> Arc<DestEnv::InputEnv> {
+    fn rebind_input(&self, &input: &usize) -> Arc<DestCtx::InputEnv> {
         Arc::new(
             self.script.allocations[input].devices.iter().map(|device| {
                 SingleInputEnv {

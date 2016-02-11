@@ -3,8 +3,8 @@
 
 /// APIs that we need to implement the code in module lang.
 
-/// The environment in which the code is meant to be executed.
-/// This can be instantiated either with actual bindings to
+/// The environment in which the code is meant to be executed.  This
+/// can typically be instantiated either with actual bindings to
 /// devices, or with a unit-testing framework.
 pub trait DeviceAccess {
     type DeviceKind;

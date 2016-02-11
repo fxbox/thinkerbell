@@ -187,17 +187,6 @@ struct ExecutionTask<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
 
 
 
-/*
-trait ExecInput {
-}
-
-trait ExecutionDeviceAccess: DeviceAccess {
-    type ExecInput: ExecInput;
-    fn condition_is_met<'a>(&'a mut Self::ConditionState) -> &'a mut bool;
-
-    fn get_inputs<'a>(input: &'a mut <Self as DeviceAccess>::Input) -> &'a mut Vec<<Self as ExecutionDeviceAccess>::ExecInput>;
-}
-*/
 struct IsMet {
     old: bool,
     new: bool,
@@ -219,7 +208,7 @@ impl<Ctx, Dev> ExecutionTask<Ctx, Dev> where Dev: DeviceAccess, Ctx: Context {
     ///
     /// The caller is responsible for spawning a new thread and
     /// calling `run()`.
-    fn new(script: &Script<UncheckedDev, UncheckedCtx>) -> Self {
+    fn new(script: &Script<UncheckedCtx, UncheckedDev>) -> Self {
         panic!("Not implemented");
 /*
         // Prepare the script for execution:
@@ -666,21 +655,20 @@ struct ConditionDev {
     is_met: bool
 }
 
-/*
 struct Precompiler<'a, CompiledDev> {
-    script: &'a Script<UncheckedDev>,
+    script: &'a Script<UncheckedCtx, UncheckedDev>,
     phantom: PhantomData<CompiledDev>,
 }
 
-impl<'a, DestDev> Precompiler<'a, DestDev> where DestDev: DeviceAccess, Ctx: Context {
-    fn new(source: &'a Script<UncheckedDev>) -> Self {
+impl<'a, DestDev> Precompiler<'a, DestDev> where DestDev: DeviceAccess {
+    fn new(source: &'a Script<UncheckedCtx, UncheckedDev>) -> Self {
         Precompiler {
             script: source,
             phantom: PhantomData
         }
     }
 }
-*/
+
 /*
 impl<'a, DestDev> Rebinder for Precompiler<'a, DestDev>
     where DestDev: DeviceAccess, Ctx: Context {

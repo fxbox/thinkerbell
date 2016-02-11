@@ -44,25 +44,6 @@ use self::rustc_serialize::json::Json;
 use std::cmp::{Eq, Ord, Ordering};
 
 
-/// A description of a device, e.g. "a lightbulb".
-#[derive(Clone)]
-pub struct DeviceKind;
-
-#[derive(Clone, PartialEq, Eq, Hash)]
-pub struct InputCapability;
-
-#[derive(Clone)]
-pub struct OutputCapability;
-
-#[derive(Clone)]
-pub struct Device;
-
-impl Device {
-    fn fetch(&self, cap: &InputCapability) -> Result<Value, ()> {
-        panic!("Not implemented yet");
-    }
-}
-
 #[derive(Clone)]
 pub enum Range {
     /// Operations on numbers.

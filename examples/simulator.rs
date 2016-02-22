@@ -28,37 +28,55 @@ Usage: simulator [options]...
 
 -h, --help            Show this message.
 -r, --ruleset <path>  Load rules from a file.
+-o, --output <path>   Load definition of an output device.
 ";
 
 
 /// An implementation of DevEnv for the purpose of unit testing.
-lazy_static!(
-    static ref OUTPUTS: Mutex<HashMap</*device*/String, HashMap</*capability*/String, HashMap<String, Value>> >> = Mutex::new(HashMap::new());
-    );
+struct State {
+    states: HashMap</*device*/String, HashMap</*capability*/String, HashMap<String, Value>> >,
+    inputs: Vec<(String, String)>,
+    outputs: Vec<(String, String)>
+}
+impl State {
+    fn new() -> State {
+        State {
+            states: HashMap::new(),
+            inputs: Vec::new(),
+            outputs: Vec::new(),
+        }
+    }
+    fn reset(&mut self) {
+        self.states.clear();
+    }
+}
+
+lazy_static! {
+    static ref STATE: Mutex<State> = Mutex::new(State::new());
+}
 
 struct TestEnv;
 
 impl TestEnv {
     fn reset() {
-        let mut outputs = OUTPUTS.lock().unwrap();
-        outputs.clear();
+        STATE.lock().unwrap().reset();
     }
 
     fn get_state(device: &String, cap: &String) -> Option<HashMap<String, Value>> {
-        println!("TestEnv: Checking the state of {}, {}", device, cap);
-        let outputs = OUTPUTS.lock().unwrap();
-        outputs.get(device).and_then(|per_device| {
+        println!("[IN] Fetching the state of input device {}, service {}", device, cap);
+        let states = &STATE.lock().unwrap().states;
+        states.get(device).and_then(|per_device| {
             per_device.get(cap).cloned()
         })
     }
 
     fn set_state(device: &String, cap: &String, state: HashMap<String, Value>) {
-        println!("TestEnv: Setting the state of {}, {}", device, cap);
-        let mut outputs = OUTPUTS.lock().unwrap();
-        if !outputs.contains_key(device) {
-            outputs.insert(device.clone(), HashMap::new());
+        println!("[OUT] Setting the state of output device {}, service {}", device, cap);
+        let mut states = &mut STATE.lock().unwrap().states;
+        if !states.contains_key(device) {
+            states.insert(device.clone(), HashMap::new());
         }
-        let per_device = outputs.get_mut(device).unwrap();
+        let per_device = states.get_mut(device).unwrap();
         per_device.insert(cap.clone(), state);
     }
 }
@@ -74,7 +92,6 @@ impl ExecutableDevEnv for TestEnv {
         type Watcher = TestWatcher;
 
     fn get_watcher() -> Self::Watcher {
-        println!("Initializing watcher");
         Self::Watcher::new()
     }
 
@@ -90,6 +107,7 @@ impl ExecutableDevEnv for TestEnv {
 
     fn get_device(key: &String) -> Option<String> {
         // A set of well-known devices
+        println!("Getting device {}", key);
         for s in vec!["built-in clock", "built-in display 1", "built-in display 2"] {
             if s == key {
                 return Some(key.clone());
@@ -102,6 +120,7 @@ impl ExecutableDevEnv for TestEnv {
         // A set of well-known inputs
         for s in vec!["ticks", "input 2:string", "input 3: bool"] {
             if s == key {
+                println!("Getting input capability {}", key);
                 return Some(key.clone());
             }
         }
@@ -111,6 +130,7 @@ impl ExecutableDevEnv for TestEnv {
     fn get_output_capability(key: &String) -> Option<String> {
         for s in vec!["show", "output 2", "output 3"] {
             if s == key {
+                println!("Getting output capability {}", key);
                 return Some(key.clone());
             }
         }
@@ -118,7 +138,6 @@ impl ExecutableDevEnv for TestEnv {
     }
 
     fn send(device: &Self::Device, cap: &Self::OutputCapability, value: &HashMap<String, Value>) {
-        println!("Sending {} to {} with value {:?}", device, cap, value);
         TestEnv::set_state(device, cap, value.clone());
     }
 }
@@ -139,6 +158,8 @@ impl TestWatcher {
         use TestWatcherMsg::*;
         let (tx, rx) = channel();
 
+        // FIXME: This should be replaced by manual entry on the REPL
+        
         thread::spawn(move || {
             let mut watchers = HashMap::new();
             let mut ticks = 0;
@@ -146,9 +167,6 @@ impl TestWatcher {
             let clock_key = ("built-in clock".to_owned(), "ticks".to_owned());
             loop {
                 ticks += 1;
-                if ticks >= 10 {
-                    assert!(false, "TestWatcher: timeout");
-                }
                 if let Ok(msg) = rx.try_recv() {
                     match msg {
                         Stop => {
@@ -167,6 +185,7 @@ impl TestWatcher {
                         None => {},
                         Some(ref watcher) => {
                             let val = Value::Duration(Duration::new(ticks, 0));
+                            println!("[WATCH] State of device {} service {} has reached {:?}", &clock_key.0, &clock_key.1, &val);
                             watcher(val);
                         }
                     }
@@ -226,5 +245,7 @@ fn main () {
         println!("ready.");
     }
 
-    loop {}
+    // FIXME: This should become a REPL.
+    loop {
+    }
 }

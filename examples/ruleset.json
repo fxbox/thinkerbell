@@ -31,7 +31,7 @@
           "range": [
             {
               "type": "Duration",
-              "s": 3
+              "s": 5
             },
             null
           ]

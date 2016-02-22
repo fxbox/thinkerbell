@@ -1,4 +1,4 @@
-use ast::{Script, Requirement, Resource, Trigger, Conjunction, Condition, Statement, Expression, UncheckedCtx, UncheckedEnv};
+use ast::{Script, Resource, Trigger, Conjunction, Condition, Statement, Expression, UncheckedCtx, UncheckedEnv};
 use values::Range;
 use util::map;
 use std::collections::HashMap;
@@ -109,20 +109,20 @@ impl Parser {
     pub fn parse_script(source: Json) -> Result<Script<UncheckedCtx, UncheckedEnv>, Error> {
         use self::serde_json::Value::*;
         if let Object(mut obj) = source {
-            let requirements = if let Some(Array(requirements)) = obj.remove(&"requirements".to_owned()) {
-                try!(map(requirements, |req| {
-                    Self::parse_requirement(req)
-                }))
-            } else {
-                return Err(Error::Script(ScriptError::NoRequirements));
-            };
-
-            let allocations = if let Some(Array(allocations)) = obj.remove(&"allocations".to_owned()) {
+            let inputs = if let Some(Array(allocations)) = obj.remove(&"inputs".to_owned()) {
                 try!(map(allocations, |alloc| {
                     Self::parse_resource(alloc)
                 }))
             } else {
-                return Err(Error::Script(ScriptError::NoAllocations));
+                return Err(Error::Script(ScriptError::NoInputs));
+            };
+
+            let outputs = if let Some(Array(allocations)) = obj.remove(&"outputs".to_owned()) {
+                try!(map(allocations, |alloc| {
+                    Self::parse_resource(alloc)
+                }))
+            } else {
+                return Err(Error::Script(ScriptError::NoOutputs));
             };
 
             let rules = if let Some(Array(rules)) = obj.remove(&"rules".to_owned()) {
@@ -135,8 +135,8 @@ impl Parser {
 
             Ok(Script {
                 metadata: (),
-                requirements: requirements,
-                allocations: allocations,
+                inputs: inputs,
+                outputs: outputs,
                 rules: rules
             })
         } else {
@@ -144,62 +144,23 @@ impl Parser {
         }
     }
 
+    /// A resource is represented by an array of id.
     pub fn parse_resource(source: Json) -> Result<Resource<UncheckedCtx, UncheckedEnv>, Error> {
         use self::serde_json::Value::*;
-        if let Array(vec) = source {
-            let devices = try!(map(vec, |dev| {
-                match dev {
-                    String(name) => Ok(name),
+        if let Array(services) = source {
+            let services = try!(map(services, |service| {
+                match service {
+                    String(id) => Ok(id),
                     _ => Err(Error::Resource(ResourceError::InvalidResource))
                 }
             }));
             Ok(Resource {
-                devices: devices,
+                kind: (),
+                services: services,
                 phantom: PhantomData,
             })
         } else {
             Err(Error::Resource(ResourceError::NotAnArray))
-        }
-    }
-
-    pub fn parse_requirement(source: Json) -> Result<Requirement<UncheckedCtx, UncheckedEnv>, Error> {
-        use self::serde_json::Value::*;
-        if let Object(mut obj) = source {
-            let kind = if let Some(String(kind)) = obj.remove(&"kind".to_owned()) {
-                kind
-            } else {
-                return Err(Error::Requirement(RequirementError::NoKind))
-            };
-            let inputs = match obj.remove(&"inputs".to_owned()) {
-                None => vec![],
-                Some(Array(inputs)) =>
-                    try!(map(inputs, |input| {
-                        match input {
-                            String(x) => Ok(x),
-                            _ => Err(Error::Requirement(RequirementError::InvalidInput))
-                        }
-                    })),
-                _ => return Err(Error::Requirement(RequirementError::InvalidInput))
-            };
-            let outputs = match obj.remove(&"outputs".to_owned()) {
-                None => vec![],
-                Some(Array(outputs)) =>
-                    try!(map(outputs, |output| {
-                        match output {
-                            String(x) => Ok(x),
-                            _ => Err(Error::Requirement(RequirementError::InvalidOutput))
-                        }
-                    })),
-                _ => return Err(Error::Requirement(RequirementError::InvalidOutput))
-            };
-            Ok(Requirement {
-                kind: kind,
-                inputs: inputs,
-                outputs: outputs,
-                phantom: PhantomData
-            })
-        } else {
-            Err(Error::Requirement(RequirementError::NotAnObject))
         }
     }
 

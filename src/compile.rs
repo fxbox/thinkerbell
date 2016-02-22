@@ -3,11 +3,13 @@ use std::marker::PhantomData;
 use std::sync::{Arc, RwLock};
 use std::collections::HashMap;
 
-use ast::{Script, Requirement, Resource, Trigger, Statement, Conjunction, Condition, Expression, Context, UncheckedCtx, UncheckedEnv};
+use ast::{Script, Resource, Trigger, Statement, Conjunction, Condition, Expression, Context, UncheckedCtx, UncheckedEnv};
 use util::map;
 
 extern crate fxbox_taxonomy;
-use self::fxbox_taxonomy::values::Value;
+use self::fxbox_taxonomy::values::*;
+use self::fxbox_taxonomy::devices::*;
+use self::fxbox_taxonomy::requests::*;
 
 extern crate chrono;
 use self::chrono::{DateTime, UTC};
@@ -44,8 +46,7 @@ pub struct CompiledConditionState {
 
 impl<Env> Context for CompiledCtx<Env> where Env: DevEnv {
     type ConditionState = CompiledConditionState; // FIXME: We could share this
-    type OutputSet = CompiledOutputSet<Env>;
-    type InputSet = CompiledInputSet<Env>;
+    type ServiceKind = ServiceKind;
 }
 
 
@@ -71,8 +72,6 @@ pub enum Error {
 }
 
 pub struct Precompiler<Env> where Env: ExecutableDevEnv {
-    inputs: Vec<Option<CompiledInputSet<Env>>>,
-    outputs: Vec<Option<CompiledOutputSet<Env>>>,
     phantom: PhantomData<Env>,
 }
 
@@ -83,104 +82,55 @@ impl<Env> Precompiler<Env> where Env: ExecutableDevEnv {
         use self::SourceError::*;
         use self::DevAccessError::*;
 
-        // In an UncheckedCtx, inputs and outputs are (unchecked)
-        // indices towards the vector of allocations. In this step,
-        // we 1/ check the indices, to make sure that they actually
-        // point inside the vector;
-        // 2/ prepare arrays `inputs` and `outputs`, which will later
-        // serve to replace the indices by pointers to the Arc containing
-        // details on the device and its state.
-
-        let mut inputs = Vec::new();
-        let mut outputs = Vec::new();
-
-        if source.allocations.len() != source.requirements.len() {
-            return Err(SourceError(AllocationLengthError {
-                allocations: source.allocations.len(),
-                requirements: source.requirements.len()
-            }));
-        }
-
-        for (alloc, req) in source.allocations.iter().zip(&source.requirements) {
-            let mut input = None;
-            let mut output = None;
-
-            let has_inputs = req.inputs.len() > 0;
-            let has_outputs = req.outputs.len() > 0;
-            if  !has_inputs && !has_outputs {
-                // An empty resource? This doesn't make sense.
-                return Err(SourceError(NoCapability));
-            }
-
-            if has_inputs {
-                let mut resolved = Vec::with_capacity(alloc.devices.len());
-                for dev in &alloc.devices {
-                    match Env::get_device(&dev) {
-                        None => return Err(DevAccessError(DeviceNotFound)),
-                        Some(d) => resolved.push(Arc::new(CompiledInput {
-                            device: d,
-                            state: RwLock::new(None)
-                        }))
-                    }
-                }
-                input = Some(resolved);
-            }
-            if has_outputs {
-                let mut resolved = Vec::with_capacity(alloc.devices.len());
-                for dev in &alloc.devices {
-                    match Env::get_device(&dev) {
-                        None => return Err(DevAccessError(DeviceNotFound)),
-                        Some(d) => resolved.push(Arc::new(CompiledOutput {
-                            device: d,
-                        }))
-                    }
-                }
-                output = Some(resolved);
-            }
-            inputs.push(input);
-            outputs.push(output);
-        }
-
         Ok(Precompiler {
-            inputs: inputs,
-            outputs: outputs,
             phantom: PhantomData
         })
     }
 
-    pub fn rebind_script(&self, script: Script<UncheckedCtx, UncheckedEnv>) -> Result<Script<CompiledCtx<Env>, Env>, Error>
+    pub fn rebind_script(&self, env: &Env, script: Script<UncheckedCtx, UncheckedEnv>) -> Result<Script<CompiledCtx<Env>, Env>, Error>
     {
+        if self.rules.len() == 0 {
+            return Err(SourceError::NoRules);
+        }
+        if self.inputs.len() == 0 {
+            return Err(SourceError::NoInputs);
+        }
+        if self.outputs.len() == 0 {
+            return Err(SourceError::NoOutputs);
+        }
+
+        let service_api = env.get_service_api();
+
         let rules = try!(map(script.rules, |rule| self.rebind_trigger(rule)));
 
-        let allocations = try!(map(script.allocations, |res| {
-            let devices = try!(map(res.devices, |dev| {
-                self.rebind_device(dev)
+        let inputs = try!(map(self.inputs, |resource| {
+            // Check that all inputs have the same ServiceKind
+            let mut kind = None;
+            let services = try!(map(resource.services, |id| {
+                let mut devices = env.get_service_api().get_input_services(
+                    InputRequest::new()
+                        .with_id(ServiceId::new(id)));
+                if devices.len() == 0 {
+                    return Err(DevAccessError::NoSuchInput); // FIXME: Annotate id?
+                }
+                assert!(devices.len() == 1);
+                let device = devices.pop();
+                match kind.take() {
+                    None => { kind = Some(device.kind.clone()); },
+                    Some(k) => {
+                        if k != device.kind {
+                            return Err(DevAccessError::IncompatibleKind);
+                        }
+                    }
+                }
+                Ok(device.id)
             }));
-            Ok(Resource {
-                devices: devices,
-                phantom: PhantomData,
-            })
-        }));
-
-        let requirements = try!(map(script.requirements, |req| {
-            let inputs = try!(map(req.inputs, |input| {
-                self.rebind_input_capability(input)
-            }));
-            let outputs = try!(map(req.outputs, |output| {
-                self.rebind_output_capability(output)
-            }));
-            Ok(Requirement {
-                kind: try!(self.rebind_device_kind(req.kind)),
-                inputs: inputs,
-                outputs: outputs,
-                phantom: PhantomData
-            })
+            // FIXME: Check that all have the same ServiceKind.
+            // FIXME:
         }));
 
         Ok(Script {
             metadata: (),
-            requirements: requirements,
-            allocations: allocations,
             rules: rules
         })
     }
@@ -207,8 +157,19 @@ impl<Env> Precompiler<Env> where Env: ExecutableDevEnv {
         })
     }
 
-    fn rebind_condition(&self, condition: Condition<UncheckedCtx, UncheckedEnv>) -> Result<Condition<CompiledCtx<Env>, Env>, Error>
+    fn rebind_condition(&self, env: &Env, condition: Condition<UncheckedCtx, UncheckedEnv>) -> Result<Condition<CompiledCtx<Env>, Env>, Error>
     {
+        let request = condition.request.clone();
+
+        // Check that the list of devices is currently non-empty.
+        // FIXME: We should also re-check when the topology changes.
+        let devices = env.get_service_api().get_input_services(condition.request);
+        for dev in devices {
+        }
+
+        // FIXME: Normalize kind
+        // FIXME: Check that kind is compatible with the type of range
+        range.get_type()
         Ok(Condition {
             range: condition.range,
             capability: try!(self.rebind_input_capability(condition.capability)),

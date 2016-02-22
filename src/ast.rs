@@ -10,6 +10,8 @@ use values::Range;
 
 extern crate fxbox_taxonomy;
 use self::fxbox_taxonomy::values::Value;
+use self::fxbox_taxonomy::devices::*;
+use self::fxbox_taxonomy::requests::*;
 
 use std::collections::HashMap;
 use std::marker::PhantomData;
@@ -34,43 +36,37 @@ pub struct Script<Ctx, Env> where Env: DevEnv, Ctx: Context {
     /// Authorization, author, description, update url, version, ...
     pub metadata: (), // FIXME: Implement
 
-    /// Monitor applications have sets of requirements (e.g. "I need a
-    /// camera"), which are allocated to actual resources through the
-    /// UX. Re-allocating resources may be requested by the user, the
-    /// foxbox, or an application, e.g. when replacing a device or
-    /// upgrading the app.
-    pub requirements: Vec<Requirement<Ctx, Env>>,
+    /// The list of input services used by this script. During
+    /// compilation, we make sure that each resource appears only
+    /// once. // FIXME: Implement
+    pub inputs: Ctx::Inputs,
 
-    /// Resources actually allocated for each requirement.
-    /// This must have the same size as `requirements`.
-    pub allocations: Vec<Resource<Ctx, Env>>,
+    /// The list of output services used by this script. During
+    /// compilation, we make sure that each resource appears only
+    /// once. // FIXME: Implement
+    pub outputs: Ctx::Outputs,
 
     /// A set of rules, stating what must be done in which circumstance.
     pub rules: Vec<Trigger<Ctx, Env>>,
 }
 
-pub struct Resource<Ctx, Env> where Env: DevEnv, Ctx: Context {
-    pub devices: Vec<Env::Device>,
-    pub phantom: PhantomData<Ctx>,
-}
+/// A set of similar input services used together to provide a single
+/// piece of information. For instance, a set of fire detectors.
+///
+/// All input services grouped as a resource must provide the same
+/// service.
+pub struct Resource<IO, Ctx, Env> where Env: DevEnv, Ctx: Context {
+    /// The kind of service provided by this resource. During
+    /// compilation, we make sure that each resource provides this
+    /// service. // FIXME: Implement
+    pub kind: Ctx::ServiceKind,
 
+    /// The actual list of endpoints. Must be non-empty. During
+    /// compilation, we make sure that each resource appears only
+    /// once. // FIXME: Implement.
+    pub services: Vec<ServiceId>,
 
-/// A resource needed by this application. Typically, a definition of
-/// device with some input our output capabilities.
-pub struct Requirement<Ctx, Env> where Env: DevEnv, Ctx: Context {
-    /// The kind of resource, e.g. "a flashbulb".
-    pub kind: Env::DeviceKind,
-
-    /// Input capabilities we need from the device, e.g. "the time of
-    /// day", "the current temperature".
-    pub inputs: Vec<Env::InputCapability>,
-
-    /// Output capabilities we need from the device, e.g. "play a
-    /// sound", "set luminosity".
-    pub outputs: Vec<Env::OutputCapability>,
-    
-    pub phantom: PhantomData<Ctx>,
-    // FIXME: We may need cooldown properties.
+    pub phantom: PhantomData<(IO, Ctx, Env)>,
 }
 
 /// A single trigger, i.e. "when some condition becomes true, do
@@ -81,14 +77,6 @@ pub struct Trigger<Ctx, Env> where Env: DevEnv, Ctx: Context {
 
     /// Stuff to do once `condition` is met.
     pub execute: Vec<Statement<Ctx, Env>>,
-
-    /*
-    /// Minimal duration between two executions of the trigger.  If a
-    /// duration was not picked by the developer, a reasonable default
-    /// duration should be picked (e.g. 10 minutes).
-    FIXME: Implement
-    pub cooldown: Duration,
-     */
 }
 
 /// A conjunction (e.g. a "and") of conditions.
@@ -100,14 +88,19 @@ pub struct Conjunction<Ctx, Env> where Env: DevEnv, Ctx: Context {
 
 /// An individual condition.
 ///
-/// Conditions always take the form: "data received from sensor is in
-/// given range".
+/// Conditions always take the form: "data received from input service
+/// is in given range".
 ///
-/// A condition is true if *any* of the sensors allocated to this
-/// requirement has yielded a value that is in the given range.
+/// A condition is true if *any* of the corresponding input services
+/// yielded a value that is in the given range.
 pub struct Condition<Ctx, Env> where Env: DevEnv, Ctx: Context {
-    pub input: Ctx::InputSet,
-    pub capability: Env::InputCapability,
+    /// The set of inputs to watch. Note that the set of inputs may
+    /// change without rebooting the script.
+    pub input: InputRequest,
+
+    /// The range of values for which the condition is considered met.
+    /// During compilation, we check that the type of `range` is
+    /// compatible with that of `input`. // FIXME: Implement
     pub range: Range,
     pub state: Ctx::ConditionState,
 }
@@ -115,66 +108,48 @@ pub struct Condition<Ctx, Env> where Env: DevEnv, Ctx: Context {
 
 /// Stuff to actually do. In practice, this means placing calls to devices.
 pub struct Statement<Ctx, Env> where Env: DevEnv, Ctx: Context {
-    /// The resource to which this command applies.  e.g. "all
-    /// heaters", "a single communication channel", etc.
-    pub destination: Ctx::OutputSet,
+    /// The resource to which this command applies.
+    pub destination: Ctx::Output,
 
-    /// The action to execute on the resource.
-    pub action: Env::OutputCapability,
-
-    /// Data to send to the resource.
-    pub arguments: HashMap<String, Expression<Ctx, Env>>
-}
-
-pub struct InputSet<Ctx, Env> where Env: DevEnv, Ctx: Context {
-    /// The set of inputs from which to grab the value, i.e.
-    /// all the inputs matching some condition.
-    pub condition: Condition<Ctx, Env>,
-
-    /// The value to grab.
-    pub capability: Env::InputCapability,
+    /// Data to send to the resource. During compilation, we check
+    /// that the type of `value` is compatible with that of
+    /// `destination`. // FIXME: Implement
+    pub value: Expression<Ctx, Env>
 }
 
 /// A value that may be sent to an output.
 pub enum Expression<Ctx, Env> where Env: DevEnv, Ctx: Context {
-    /// A dynamic value, which must be read from one or more inputs.
-    // FIXME: Not ready yet
-    Input(InputSet<Ctx, Env>),
-
     /// A constant value.
     Value(Value),
-
-    /// More than a single value.
-    Vec(Vec<Expression<Ctx, Env>>)
 }
 
 /// A manner of representing internal nodes.
 pub trait Context {
-    /// A representation of one or more input devices.
-    type InputSet;
-
-    /// A representation of one or more output devices.
-    type OutputSet;
-
     /// A representation of the current state of a condition.
     type ConditionState;
+
+    type Inputs;
+    type Outputs;
+
+    type ServiceKind;
 }
 
 /// A Context used to represent a script that hasn't been compiled
-/// yet. Rather than pointing to specific device + capability, inputs
-/// and outputs are numbers that are meaningful only in the AST.
+/// yet.
 pub struct UncheckedCtx;
 impl Context for UncheckedCtx {
-    /// In this implementation, each input is represented by its index
-    /// in the array of allocations.
-    type InputSet = usize;
-
-    /// In this implementation, each output is represented by its
-    /// index in the array of allocations.
-    type OutputSet = usize;
-
     /// In this implementation, conditions have no state.
     type ConditionState = ();
+
+    /// In this implementation, we have not yet checked and grouped
+    /// inputs.
+    type Inputs = ();
+
+    /// In this implementation, we have not yet checked and grouped
+    /// outputs.
+    type Outputs = ();
+
+    type ServiceKind = String;
 }
 
 /// A DevEnv used to represent a script that hasn't been
@@ -182,8 +157,4 @@ impl Context for UncheckedCtx {
 /// etc. everything is represented by a string.
 pub struct UncheckedEnv;
 impl DevEnv for UncheckedEnv {
-    type Device = String;
-    type DeviceKind = String;
-    type InputCapability = String;
-    type OutputCapability = String;
 }

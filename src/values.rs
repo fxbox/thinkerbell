@@ -1,7 +1,9 @@
-extern crate fxbox_taxonomy;
-use self::fxbox_taxonomy::values::{Value, Type};
+use fxbox_taxonomy::values::{Value, Type};
 
-#[derive(Clone)]
+use serde::ser::Serializer;
+use serde::de::Deserializer;
+
+#[derive(Clone, Deserialize, Serialize)]
 pub enum Range {
     /// Leq(x) accepts any value v such that v <= x.
     Leq(Value),

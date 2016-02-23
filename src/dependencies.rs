@@ -4,15 +4,15 @@ use std::collections::HashMap;
 
 use values::Range;
 
-extern crate fxbox_taxonomy;
-use self::fxbox_taxonomy::values::Value;
-
+use serde::de::Deserialize;
 /// APIs that we need to implement the code in module lang.
 
 /// The environment in which the code is meant to be executed.  This
 /// can typically be instantiated either with actual bindings to
 /// devices, or with a unit-testing framework.
-pub trait DevEnv: Send {
+pub trait DevEnv: Send + Deserialize + Default {
+    // We need Deserialize and Default for derivation purposes,
+    // but their runtime implementation should never be called.
 }
 
 /*

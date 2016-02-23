@@ -13,12 +13,9 @@ use self::fxbox_taxonomy::values::Value;
 /// can typically be instantiated either with actual bindings to
 /// devices, or with a unit-testing framework.
 pub trait DevEnv: Send {
-    type DeviceKind: Clone + Send;
-    type Device: Clone + Send;
-    type InputCapability: Clone + Send;
-    type OutputCapability: Clone + Send;
 }
 
+/*
 pub trait ExecutableDevEnv: DevEnv {
     fn get_device_kind(&String) -> Option<Self::DeviceKind>;
     fn get_device(&String) -> Option<Self::Device>;
@@ -45,6 +42,6 @@ pub trait Watcher {
 }
 
 
-
+*/
 
 

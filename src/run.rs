@@ -1,6 +1,6 @@
-use dependencies::{DevEnv, ExecutableDevEnv, Watcher};
-use ast::{Script, Trigger, Statement, Conjunction, Condition, Expression, UncheckedCtx, UncheckedEnv};
-use compile::{CompiledCtx, Precompiler, CompiledInput, DatedData};
+use dependencies::DevEnv;
+use ast::{Script, Trigger, Statement, Conjunction, Condition, UncheckedCtx, UncheckedEnv};
+use compile::{CompiledCtx, Precompiler, DatedData};
 use compile;
 
 extern crate fxbox_taxonomy;
@@ -16,17 +16,18 @@ use std::sync::Arc;
 extern crate chrono;
 use self::chrono::UTC;
 
+/*
 ///
 /// # Launching and running the script
 ///
 
 /// Running and controlling a single script.
-pub struct Execution<Env> where Env: ExecutableDevEnv + 'static {
+pub struct Execution<Env> where Env: self::fxbox_taxonomy::api::API + 'static {
     command_sender: Option<Sender<ExecutionOp>>,
     phantom: PhantomData<Env>,
 }
 
-impl<Env> Execution<Env> where Env: ExecutableDevEnv + 'static {
+impl<Env> Execution<Env> where Env: self::fxbox_taxonomy::api::API + 'static {
     pub fn new() -> Self {
         Execution {
             command_sender: None,
@@ -81,7 +82,7 @@ impl<Env> Execution<Env> where Env: ExecutableDevEnv + 'static {
     }
 }
 
-impl<Env> Drop for Execution<Env> where Env: ExecutableDevEnv + 'static {
+impl<Env> Drop for Execution<Env> where Env: self::fxbox_taxonomy::api::API + 'static {
     fn drop(&mut self) {
         let _ignored = self.stop(|_ignored| { });
     }
@@ -112,7 +113,7 @@ enum ExecutionOp {
 }
 
 
-impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
+impl<Env> ExecutionTask<Env> where Env: self::fxbox_taxonomy::api::API {
     /// Create a new execution task.
     ///
     /// The caller is responsible for spawning a new thread and
@@ -306,7 +307,7 @@ impl<Env> Condition<CompiledCtx<Env>, Env> where Env: DevEnv {
     }
 }
 
-impl<Env> Statement<CompiledCtx<Env>, Env> where Env: ExecutableDevEnv {
+impl<Env> Statement<CompiledCtx<Env>, Env> where Env: self::fxbox_taxonomy::api::API {
     fn eval(&self) -> Result<(), Error> {
         let args = self.arguments.iter().map(|(k, v)| {
             (k.clone(), v.eval())
@@ -318,6 +319,7 @@ impl<Env> Statement<CompiledCtx<Env>, Env> where Env: ExecutableDevEnv {
     }
 }
 
+/*
 impl<Env> Expression<CompiledCtx<Env>, Env> where Env: ExecutableDevEnv {
     fn eval(&self) -> Value {
         match *self {
@@ -329,7 +331,7 @@ impl<Env> Expression<CompiledCtx<Env>, Env> where Env: ExecutableDevEnv {
         }
     }
 }
-
+*/
 
 
 #[derive(Debug)]
@@ -343,3 +345,4 @@ pub enum Error {
     CompileError(compile::Error),
     RunningError(RunningError),
 }
+ */

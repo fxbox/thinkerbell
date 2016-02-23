@@ -1,4 +1,4 @@
-use ast::{Script, Resource, Trigger, Conjunction, Condition, Statement, Expression, UncheckedCtx, UncheckedEnv};
+use ast::{Script, Resource, Trigger, Conjunction, Condition, Statement, UncheckedCtx, UncheckedEnv};
 use values::Range;
 use util::map;
 use std::collections::HashMap;
@@ -10,6 +10,7 @@ pub type Json = self::serde_json::Value;
 
 extern crate fxbox_taxonomy;
 use self::fxbox_taxonomy::values::{ExtNumeric, Value, Temperature};
+use self::fxbox_taxonomy::devices::ServiceId;
 
 #[derive(Debug)]
 pub enum StatementError {
@@ -109,22 +110,6 @@ impl Parser {
     pub fn parse_script(source: Json) -> Result<Script<UncheckedCtx, UncheckedEnv>, Error> {
         use self::serde_json::Value::*;
         if let Object(mut obj) = source {
-            let inputs = if let Some(Array(allocations)) = obj.remove(&"inputs".to_owned()) {
-                try!(map(allocations, |alloc| {
-                    Self::parse_resource(alloc)
-                }))
-            } else {
-                return Err(Error::Script(ScriptError::NoInputs));
-            };
-
-            let outputs = if let Some(Array(allocations)) = obj.remove(&"outputs".to_owned()) {
-                try!(map(allocations, |alloc| {
-                    Self::parse_resource(alloc)
-                }))
-            } else {
-                return Err(Error::Script(ScriptError::NoOutputs));
-            };
-
             let rules = if let Some(Array(rules)) = obj.remove(&"rules".to_owned()) {
                 try!(map(rules, |rule| {
                     Self::parse_trigger(rule)
@@ -135,22 +120,53 @@ impl Parser {
 
             Ok(Script {
                 metadata: (),
-                inputs: inputs,
-                outputs: outputs,
-                rules: rules
+                rules: rules,
+                phantom: PhantomData,
             })
         } else {
             Err(Error::Script(ScriptError::NotAnObject))
         }
     }
 
+    pub fn parse_input_request(source: Json) -> Result<InputRequest, Error> {
+        use self::serde_json::Value::*;
+        if let Object(mut obj) = source {
+            let id = match obj.remove(&"id".to_owned()) {
+                None => Exactly::Empty,
+                Some(String(s)) => Exactly::Exactly(s),
+                _ => return Err(Error::Request(RequestError::BadId))
+            };
+            let parent = match obj.remove(&"parent".to_owned()) {
+                None => Exactly::Empty,
+                Some(String(s)) => Exactly::Exactly(s),
+                _ => return Err(Error::Request(RequestError::BadParent))
+            };
+            let parent = match obj.remove(&"parent".to_owned()) {
+                None => Exactly::Empty,
+                Some(String(s)) => Exactly::Exactly(s),
+                _ => return Err(Error::Request(RequestError::BadParent))
+            };
+            
+            Ok(InputRequest {
+                id: id,
+                parent: parent,
+                tags: tags,
+                kind: kind,
+                poll: poll,
+                trigger: trigger
+            })
+        } else {
+            Err(Error::Script(RequestError::NotAnObject))
+        }        
+    }
+
     /// A resource is represented by an array of id.
-    pub fn parse_resource(source: Json) -> Result<Resource<UncheckedCtx, UncheckedEnv>, Error> {
+    pub fn parse_resource<IO>(source: Json) -> Result<Resource<IO, UncheckedCtx, UncheckedEnv>, Error> {
         use self::serde_json::Value::*;
         if let Array(services) = source {
             let services = try!(map(services, |service| {
                 match service {
-                    String(id) => Ok(id),
+                    String(id) => Ok(ServiceId::new(id)),
                     _ => Err(Error::Resource(ResourceError::InvalidResource))
                 }
             }));
@@ -167,13 +183,13 @@ impl Parser {
     pub fn parse_trigger(source: Json) -> Result<Trigger<UncheckedCtx, UncheckedEnv>, Error> {
         use self::serde_json::Value::*;
         if let Object(mut obj) = source {
-            let condition = if let Some(condition) = obj.remove(&"condition".to_owned()) {
+            let condition = if let Some(condition) = obj.remove(&"when".to_owned()) {
                 try!(Self::parse_conjunction(condition))
             } else {
                 return Err(Error::Trigger(TriggerError::NoCondition))
             };
 
-            let execute = if let Some(Array(execute)) = obj.remove(&"action".to_owned()) {
+            let execute = if let Some(Array(execute)) = obj.remove(&"do".to_owned()) {
                 try!(map(execute, |statement| {
                     Self::parse_statement(statement)
                 }))
@@ -184,6 +200,7 @@ impl Parser {
             Ok(Trigger {
                 condition: condition,
                 execute: execute,
+                phantom: PhantomData,
             })
         } else {
             Err(Error::Trigger(TriggerError::NotAnObject))
@@ -199,7 +216,8 @@ impl Parser {
             }));
             Ok(Conjunction {
                 all: all,
-                state: ()
+                state: (),
+                phantom: PhantomData,
             })
         } else {
             Err(Error::Conjunction(ConjunctionError::NotAnArray))
@@ -209,13 +227,9 @@ impl Parser {
     pub fn parse_condition(source: Json) -> Result<Condition<UncheckedCtx, UncheckedEnv>, Error> {
         use self::serde_json::Value::*;
         if let Object(mut obj) = source {
-            let input = match obj.remove("input") {
-                Some(U64(input)) => input as usize,
+            let input = match obj.remove("service") {
+                Some(service) => try!(parse_service(service)),
                 _ => return Err(Error::Condition(ConditionError::InvalidInput))
-            };
-            let capability = match obj.remove("capability") {
-                Some(String(capability)) => capability,
-                _ => return Err(Error::Condition(ConditionError::InvalidCapability))
             };
             let range = match obj.remove("range") {
                 None => Range::Any,
@@ -259,9 +273,9 @@ impl Parser {
             };
             Ok(Condition {
                 input: input,
-                capability: capability,
                 range: range,
                 state: (),
+                phantom: PhantomData,
             })
         } else {
             Err(Error::Condition(ConditionError::NotAnObject))
@@ -303,7 +317,7 @@ impl Parser {
         }
     }
 
-
+/*
     pub fn parse_expression(source: Json) -> Result<Expression<UncheckedCtx, UncheckedEnv>, Error> {
         use self::serde_json::Value::*;
         // FIXME: This should be entirely rewritten to take into account all values.
@@ -318,7 +332,8 @@ impl Parser {
         };
         Ok(result)
     }
-
+     */
+    
     pub fn parse_value(source: Json) -> Result<Value, Error> { // FIXME: Handle other value kinds
         use self::serde_json::Value::*;
         let result = match source {

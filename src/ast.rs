@@ -36,18 +36,10 @@ pub struct Script<Ctx, Env> where Env: DevEnv, Ctx: Context {
     /// Authorization, author, description, update url, version, ...
     pub metadata: (), // FIXME: Implement
 
-    /// The list of input services used by this script. During
-    /// compilation, we make sure that each resource appears only
-    /// once. // FIXME: Implement
-    pub inputs: Ctx::Inputs,
-
-    /// The list of output services used by this script. During
-    /// compilation, we make sure that each resource appears only
-    /// once. // FIXME: Implement
-    pub outputs: Ctx::Outputs,
-
     /// A set of rules, stating what must be done in which circumstance.
     pub rules: Vec<Trigger<Ctx, Env>>,
+
+    phantom: PhantomData<(Ctx, Env)>,
 }
 
 /// A set of similar input services used together to provide a single
@@ -77,6 +69,8 @@ pub struct Trigger<Ctx, Env> where Env: DevEnv, Ctx: Context {
 
     /// Stuff to do once `condition` is met.
     pub execute: Vec<Statement<Ctx, Env>>,
+
+    phantom: PhantomData<(Ctx, Env)>,
 }
 
 /// A conjunction (e.g. a "and") of conditions.
@@ -84,6 +78,8 @@ pub struct Conjunction<Ctx, Env> where Env: DevEnv, Ctx: Context {
     /// The conjunction is true iff all of the following expressions evaluate to true.
     pub all: Vec<Condition<Ctx, Env>>,
     pub state: Ctx::ConditionState,
+
+    phantom: PhantomData<(Ctx, Env)>,
 }
 
 /// An individual condition.
@@ -95,42 +91,40 @@ pub struct Conjunction<Ctx, Env> where Env: DevEnv, Ctx: Context {
 /// yielded a value that is in the given range.
 pub struct Condition<Ctx, Env> where Env: DevEnv, Ctx: Context {
     /// The set of inputs to watch. Note that the set of inputs may
-    /// change without rebooting the script.
-    pub input: InputRequest,
+    /// change (e.g. when devices are relabelled) without rebooting
+    /// the script.
+    pub input: Ctx::Inputs,
 
     /// The range of values for which the condition is considered met.
     /// During compilation, we check that the type of `range` is
     /// compatible with that of `input`. // FIXME: Implement
     pub range: Range,
     pub state: Ctx::ConditionState,
+
+    phantom: PhantomData<(Ctx, Env)>,
 }
 
 
 /// Stuff to actually do. In practice, this means placing calls to devices.
 pub struct Statement<Ctx, Env> where Env: DevEnv, Ctx: Context {
     /// The resource to which this command applies.
-    pub destination: Ctx::Output,
+    pub destination: Ctx::Outputs,
 
     /// Data to send to the resource. During compilation, we check
     /// that the type of `value` is compatible with that of
     /// `destination`. // FIXME: Implement
-    pub value: Expression<Ctx, Env>
+    pub value: Value,
+
+    phantom: PhantomData<(Ctx, Env)>,
 }
 
-/// A value that may be sent to an output.
-pub enum Expression<Ctx, Env> where Env: DevEnv, Ctx: Context {
-    /// A constant value.
-    Value(Value),
-}
 
 /// A manner of representing internal nodes.
 pub trait Context {
     /// A representation of the current state of a condition.
     type ConditionState;
-
     type Inputs;
     type Outputs;
-
     type ServiceKind;
 }
 
@@ -140,16 +134,9 @@ pub struct UncheckedCtx;
 impl Context for UncheckedCtx {
     /// In this implementation, conditions have no state.
     type ConditionState = ();
-
-    /// In this implementation, we have not yet checked and grouped
-    /// inputs.
-    type Inputs = ();
-
-    /// In this implementation, we have not yet checked and grouped
-    /// outputs.
-    type Outputs = ();
-
-    type ServiceKind = String;
+    type Inputs = InputRequest;
+    type Outputs = InputRequest;
+    type ServiceKind = ();
 }
 
 /// A DevEnv used to represent a script that hasn't been

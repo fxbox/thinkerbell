@@ -7,7 +7,7 @@ authors = ["David Rajchenbach-Teller <dteller@mozilla.com>"]
 serde_json = "0.6.0"
 chrono = "0.2.19"
 lazy_static = "0.1.15"
-fxbox_taxonomy = { git = "https://github.com/fxbox/taxonomy.git",  rev="c630a34" }
+fxbox_taxonomy = { git = "https://github.com/fxbox/taxonomy.git",  rev="b6572fbe1e3c8f6d672351efb902298e0c794ed8" }
 
 [dev-dependencies]
 docopt = "0.6.78"

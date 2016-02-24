@@ -13,7 +13,7 @@ use std::marker::PhantomData;
 use std::result::Result;
 use std::result::Result::*;
 use std::thread;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
 
 use chrono::UTC;
@@ -138,13 +138,32 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
 
         // Start listening to all inputs that appear in conditions.
         for rule in &self.state.rules  {
-            for condition in &rule.conditions {
 
-                // The latest values received from the inputs.
-                let mut values = HashMap::new();
+            let mut rule_is_met = false; // FIXME: Why does this build? Shouldn't I protect `rule_is_met` by my mutex?
 
-                let options = api::WatchOptions::new()
-                    .with_inputs(condition.input.clone());
+            // A Arc<Mutex<_>> is required here as we spawn several
+            // Send + Sync closures, which could in theory be executed
+            // each on its thread.
+            //
+            // FIXME: Find a way to specify that all the closures are
+            // executed on the same thread, to be rid of the Mutex?
+            let conditions_are_met = Arc::new(Mutex::new({
+                let mut vec = Vec::with_capacity(rule.conditions.len());
+                vec.resize(rule.conditions.len(), false);
+                vec
+            }));
+
+            for (condition, index) in rule.conditions.iter().zip(0 as usize..) {
+                let conditions_are_met = conditions_are_met.clone();
+                // A mapping from `ServiceId` to `true` (the condition
+                // is met for this service) or `false` (the condition
+                // isn't met for this service).
+                let mut inputs_are_met = HashMap::new();
+
+                let options: Vec<_> = condition.source.iter().map(|input| {
+                    api::WatchOptions::new()
+                        .with_inputs(input.clone())
+                }).collect();
                 // We will often end up watching several times the
                 // same service. For the moment, we do not attempt to
                 // optimize either I/O (which we expect will be
@@ -157,187 +176,70 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
                         move |event| {
                             match event {
                                 WatchEvent::InputRemoved(id) => {
-                                    values.remove(&id);
+                                    inputs_are_met.remove(&id);
                                 },
                                 WatchEvent::InputAdded(id) => {
                                     // An input was added. Note that there is
                                     // a possibility that the input was not
                                     // empty, in case we received messages in
                                     // the wrong order.
-                                    values.entry(id).or_insert(None);
+                                    inputs_are_met.insert(id, false);
                                 }
                                 WatchEvent::Value{from: id, value} => {
+                                    use std::mem::replace;
+
                                     // An input was updated. Note that there is
                                     // a possibility that the input was
                                     // empty, in case we received messages in
                                     // the wrong order.
-                                    values.insert(id, Some(value));
-                                    // FIXME: Actually, we don't really need `values`, do we? Ah, yes, we do.
+                                    let input_is_met = condition.range.contains(&value);
+                                    inputs_are_met.insert(id, input_is_met); // FIXME: Could be used to optimize
 
-                                    
-                                    // FIXME: Check if `condition` switches from false to true
-                                    // FIXME: Check if `conjunction` switches from false to true
+                                    // 1. Is there at least one input_is_met = true in this condition?
+                                    let some_input_is_met = input_is_met ||
+                                        inputs_are_met.values().find(|is_met| **is_met).is_some();
+                                    let mut conditions_are_met = conditions_are_met.lock().unwrap();
+                                    // This can fail only if one of the threads has already panicked, that's ok with us.
+                                    conditions_are_met[index] = some_input_is_met;
+
+                                    // 2. Are all conditions in this rule met?
+                                    let all_conditions_are_met = conditions_are_met.iter().find(|is_met| **is_met).is_some();
+
+                                    // Release the lock as early as possible.
+                                    drop(conditions_are_met);
+
+                                    // 3. Is the rule already met?
+                                    // FIXME: Why does this build?
+                                    let rule_was_met = replace(&mut rule_is_met, all_conditions_are_met);
+
+                                    if !rule_was_met && all_conditions_are_met {
+                                        // Ahah, we have just triggered the statements!
+                                        for statement in &rule.execute {
+                                            let _ignore = statement.eval(); // FIXME: Report errors
+                                        }
+                                    }
                                 }
                             }
                         }));
                 }
-                        
         }
-/*
-        // Make sure that the vector never mutates past this
-        // point. This ensures that our `index` remains valid for the
-        // rest of the execution.
-        let cells = cells;
 
-        // FIXME: We are going to end up with stale data in some inputs.
-        // We need to find out how to get rid of it.
-
-        // Now, start handling events.
-        for msg in &self.rx {
-            use self::ExecutionOp::*;
-            match msg {
-                Stop(f) => {
-                    // Leave the loop.
-                    // The watcher and the witnesses will be cleaned up on exit.
-                    // Any further message will be ignored.
-                    f(Ok(()));
-                    return;
-                }
-
-                Update {value, index} => {
-                    let cell = &cells[index];
-                    *cell.state.write().unwrap() = Some(DatedData {
-                        updated: UTC::now(),
-                        data: value
-                    });
-                    // Note that we can unwrap() safely,
-                    // as it fails only if the thread is
-                    // already in panic.
-
-                    // Find out if we should execute triggers.
-                    for mut rule in &mut self.state.rules {
-                        let is_met = rule.is_met();
-                        if !(is_met.new && !is_met.old) {
-                            // We should execute the trigger only if
-                            // it was false and is now true. Here,
-                            // either it was already true or it isn't
-                            // false yet.
-                            continue;
-                        }
-
-                        // Conditions were not met, now they are, so
-                        // it is time to start executing.
-
-                        // FIXME: We do not want triggers to be
-                        // triggered too often. Handle cooldown.
-                        
-                        for statement in &rule.execute {
-                            let _ignored = statement.eval(); // FIXME: Log errors
-                        }
-                    }
-                }
-
-            }
-        }
-*/
-
-    }
-}
-
-/*
-///
-/// # Evaluating conditions
-///
-
-struct IsMet {
-    old: bool,
-    new: bool,
-}
-
-impl<Env> Rule<CompiledCtx<Env>> where Env: DevEnv {
-    fn is_met(&mut self) -> IsMet {
-        self.condition.is_met()
-    }
-}
-
-
-impl<Env> Conjunction<CompiledCtx<Env>> where Env: DevEnv {
-    /// For a conjunction to be true, all its components must be true.
-    fn is_met(&mut self) -> IsMet {
-        let old = self.state.is_met;
-        let mut new = true;
-
-        for mut single in &mut self.all {
-            if !single.is_met().new {
-                new = false;
-                // Don't break. We want to make sure that we update
-                // `is_met` of all individual conditions.
-            }
-        }
-        self.state.is_met = new;
-        IsMet {
-            old: old,
-            new: new,
+        loop {
+            // FIXME: Receive
         }
     }
 }
 
-
-impl<Env> Condition<CompiledCtx<Env>> where Env: DevEnv {
-    /// Determine if one of the devices serving as input for this
-    /// condition meets the condition.
-    fn is_met(&mut self) -> IsMet {
-        let old = self.state.is_met;
-        let mut new = false;
-        for single in &*self.input {
-            // This will fail only if the thread has already panicked.
-            let state = single.state.read().unwrap();
-            let is_met = match *state {
-                None => { false /* We haven't received a measurement yet.*/ },
-                Some(ref data) => {
-                    self.range.contains(&data.data)
-                }
-            };
-            if is_met {
-                new = true;
-                break;
-            }
-        }
-
-        self.state.is_met = new;
-        IsMet {
-            old: old,
-            new: new,
-        }
-    }
-}
 
 impl<Env> Statement<CompiledCtx<Env>> where Env: ExecutableDevEnv {
     fn eval(&self) -> Result<(), Error> {
-        let args = self.arguments.iter().map(|(k, v)| {
-            (k.clone(), v.eval())
-        }).collect();
-        for output in &self.destination {
-            Env::send(&output.device, &self.action, &args); // FIXME: Handle errors
-        }
-        return Ok(());
+        let _ignore = Env::API::put_service_value(&self.destination, self.value.clone());
+        // FIXME: Report error
+        Ok(())
     }
 }
 
-/*
-impl<Env> Expression<CompiledCtx<Env>> where Env: ExecutableDevEnv {
-    fn eval(&self) -> Value {
-        match *self {
-            Expression::Value(ref v) => v.clone(),
-            Expression::Input(_) => panic!("Cannot read an input in an expression yet"),
-            Expression::Vec(_) => {
-                panic!("Cannot handle vectors of expressions yet");
-            }
-        }
-    }
-}
-*/
-*/
+
 
 #[derive(Debug)]
 pub enum RunningError {

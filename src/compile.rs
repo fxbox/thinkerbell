@@ -28,7 +28,7 @@ use serde::de::{Deserialize, Deserializer};
 /// The environment in which the code is meant to be executed.  This
 /// can typically be instantiated either with actual bindings to
 /// devices, or with a unit-testing framework. // FIXME: Move this to run.rs
-pub trait ExecutableDevEnv: Serialize + Deserialize + Default {
+pub trait ExecutableDevEnv: Serialize + Deserialize + Default + Send + Sync {
     type WatchGuard;
     type API: API<WatchGuard = Self::WatchGuard>;
 }
@@ -179,9 +179,9 @@ impl<Env> Compiler<Env> where Env: ExecutableDevEnv {
         if match_.kind.get_type() != typ {
             return Err(Error::TypeError(TypeError::KindAndRangeDoNotAgree));
         }
-        let input = match_.input.with_kind(match_.kind.clone());
+        let source = match_.source.iter().map(|input| input.clone().with_kind(match_.kind.clone())).collect();
         Ok(Match {
-            input: input,
+            source: source,
             kind: match_.kind,
             range: match_.range,
             phantom: Phantom::new()
@@ -190,7 +190,7 @@ impl<Env> Compiler<Env> where Env: ExecutableDevEnv {
 
     fn compile_statement(&self, statement: Statement<UncheckedCtx>) -> Result<Statement<CompiledCtx<Env>>, Error>
     {
-        let destination = statement.destination.with_kind(statement.kind.clone());
+        let destination = statement.destination.iter().map(|output| output.clone().with_kind(statement.kind.clone())).collect();
         Ok(Statement {
             destination: destination,
             value: statement.value,

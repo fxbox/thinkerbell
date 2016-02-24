@@ -7,11 +7,6 @@ extern crate serde_json;
 
 extern crate fxbox_taxonomy;
 
-
-/// An abstraction on top of the APIs that will need to be implemented
-/// at lower-level.
-// pub mod dependencies;
-
 /// Dealing with values provided by the devices.
 pub mod values;
 
@@ -25,7 +20,7 @@ pub mod parse;
 pub mod compile;
 
 /// Actually executing code.
-//pub mod run;
+pub mod run;
 
 /// Miscellaneous internal utilities.
 pub mod util;

@@ -1,10 +1,12 @@
-use dependencies::DevEnv;
+//! Launching and running the script
+
 use ast::{Script, Trigger, Statement, Conjunction, Condition, UncheckedCtx, UncheckedEnv};
-use compile::{CompiledCtx, Precompiler, DatedData};
+use compile::{Compiler, CompiledCtx, ExecutableDevEnv};
 use compile;
 
-extern crate fxbox_taxonomy;
-use self::fxbox_taxonomy::values::Value;
+use fxbox_taxonomy::values::*;
+use fxbox_taxonomy::api;
+use fxbox_taxonomy::api::{API, WatchEvent};
 
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::marker::PhantomData;
@@ -12,22 +14,22 @@ use std::result::Result;
 use std::result::Result::*;
 use std::thread;
 use std::sync::Arc;
+use std::collections::HashMap;
 
-extern crate chrono;
-use self::chrono::UTC;
+use chrono::UTC;
 
-/*
-///
-/// # Launching and running the script
-///
+fn test<F>(cb: F) where F: FnMut(WatchEvent) + Send + Sync {
+    unimplemented!()
+}
+
 
 /// Running and controlling a single script.
-pub struct Execution<Env> where Env: self::fxbox_taxonomy::api::API + 'static {
+pub struct Execution<Env> where Env: ExecutableDevEnv + 'static {
     command_sender: Option<Sender<ExecutionOp>>,
     phantom: PhantomData<Env>,
 }
 
-impl<Env> Execution<Env> where Env: self::fxbox_taxonomy::api::API + 'static {
+impl<Env> Execution<Env> where Env: ExecutableDevEnv + 'static {
     pub fn new() -> Self {
         Execution {
             command_sender: None,
@@ -82,16 +84,16 @@ impl<Env> Execution<Env> where Env: self::fxbox_taxonomy::api::API + 'static {
     }
 }
 
-impl<Env> Drop for Execution<Env> where Env: self::fxbox_taxonomy::api::API + 'static {
+impl<Env> Drop for Execution<Env> where Env: ExecutableDevEnv + 'static {
     fn drop(&mut self) {
         let _ignored = self.stop(|_ignored| { });
     }
 }
 
-/// A script ready to be executed.
-/// Each script is meant to be executed in an individual thread.
-pub struct ExecutionTask<Env> where Env: DevEnv {
-    /// The current state of execution the script.
+/// A script ready to be executed. Each script is meant to be
+/// executed in an individual thread.
+pub struct ExecutionTask<Env> where Env: ExecutableDevEnv {
+    /// The script, annotated with its state.
     state: Script<CompiledCtx<Env>, Env>,
 
     /// Communicating with the thread running script.
@@ -113,22 +115,17 @@ enum ExecutionOp {
 }
 
 
-impl<Env> ExecutionTask<Env> where Env: self::fxbox_taxonomy::api::API {
+impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
     /// Create a new execution task.
     ///
     /// The caller is responsible for spawning a new thread and
     /// calling `run()`.
     fn new(script: Script<UncheckedCtx, UncheckedEnv>, tx: Sender<ExecutionOp>, rx: Receiver<ExecutionOp>) -> Result<Self, Error> {
-        // Prepare the script for execution:
-        // - replace instances of Input with InputDev, which map
-        //   to a specific device and cache the latest known value
-        //   on the input.
-        // - replace instances of Output with OutputDev
-        let precompiler = try!(Precompiler::new(&script).map_err(|err| Error::CompileError(err)));
-        let bound = try!(precompiler.rebind_script(script).map_err(|err| Error::CompileError(err)));
+        let compiler = try!(Compiler::new().map_err(|err| Error::CompileError(err)));
+        let state = try!(compiler.compile(script).map_err(|err| Error::CompileError(err)));
         
         Ok(ExecutionTask {
-            state: bound,
+            state: state,
             rx: rx,
             tx: tx
         })
@@ -137,52 +134,52 @@ impl<Env> ExecutionTask<Env> where Env: self::fxbox_taxonomy::api::API {
     /// Execute the monitoring task.
     /// This currently expects to be executed in its own thread.
     fn run(&mut self) {
-        let mut watcher = Env::get_watcher();
         let mut witnesses = Vec::new();
-        
-        // A thread-safe indirection towards a single input state.
-        // We assume that `cells` never mutates again once we
-        // have finished the loop below.
-        let mut cells : Vec<Arc<CompiledInput<Env>>> = Vec::new();
 
         // Start listening to all inputs that appear in conditions.
-        // Some inputs may appear only in expressions, so we are
-        // not interested in their value.
         for rule in &self.state.rules  {
             for condition in &rule.condition.all {
-                for single in &*condition.input {
-                    let tx = self.tx.clone();
-                    cells.push(single.clone());
-                    let index = cells.len() - 1;
 
-                    witnesses.push(
-                        // We can end up watching several times the
-                        // same device + capability + range.  For the
-                        // moment, we do not attempt to optimize
-                        // either I/O (which we expect will be
-                        // optimized by `watcher`) or condition
-                        // checking (which we should eventually
-                        // optimize, if we find out that we end up
-                        // with large rulesets).
-                        watcher.add(
-                            &single.device,
-                            &condition.capability,
-                            &condition.range,
-                            move |value| {
-                                // One of the inputs has been updated.
-                                // Update `state` and determine
-                                // whether there is anything we need
-                                // to do.
-                                let _ignored = tx.send(ExecutionOp::Update {
-                                    value: value,
-                                    index: index
-                                });
-                                // If the thread is down, it is ok to ignore messages.
-                            }));
-                    }
-            }
+                // The latest values received from the inputs.
+                let mut values = HashMap::new();
+
+                let options = api::WatchOptions::new()
+                    .with_inputs(condition.input.clone());
+                // We will often end up watching several times the
+                // same service. For the moment, we do not attempt to
+                // optimize either I/O (which we expect will be
+                // optimized by `watcher`) or condition checking
+                // (which we should eventually optimize, if we find
+                // out that we end up with large rulesets).
+                witnesses.push(
+                    Env::API::register_service_watch(
+                        options,
+                        move |event| {
+                            match event {
+                                WatchEvent::InputRemoved(id) => {
+                                    values.remove(&id);
+                                },
+                                WatchEvent::InputAdded(id) => {
+                                    // An input was added. Note that there is
+                                    // a possibility that the input was not
+                                    // empty, in case we received messages in
+                                    // the wrong order.
+                                    values.entry(id).or_insert(None);
+                                }
+                                WatchEvent::Value{from: id, value} => {
+                                    // An input was updated. Note that there is
+                                    // a possibility that the input was
+                                    // empty, in case we received messages in
+                                    // the wrong order.
+                                    values.insert(id, Some(value));
+                                    // FIXME: Now check whether the condition is met.
+                                }
+                            }
+                        }));
+                }
+                        
         }
-
+/*
         // Make sure that the vector never mutates past this
         // point. This ensures that our `index` remains valid for the
         // rest of the execution.
@@ -235,11 +232,15 @@ impl<Env> ExecutionTask<Env> where Env: self::fxbox_taxonomy::api::API {
                         }
                     }
                 }
+
             }
         }
+*/
+
     }
 }
 
+/*
 ///
 /// # Evaluating conditions
 ///
@@ -307,7 +308,7 @@ impl<Env> Condition<CompiledCtx<Env>, Env> where Env: DevEnv {
     }
 }
 
-impl<Env> Statement<CompiledCtx<Env>, Env> where Env: self::fxbox_taxonomy::api::API {
+impl<Env> Statement<CompiledCtx<Env>, Env> where Env: ExecutableDevEnv {
     fn eval(&self) -> Result<(), Error> {
         let args = self.arguments.iter().map(|(k, v)| {
             (k.clone(), v.eval())
@@ -332,7 +333,7 @@ impl<Env> Expression<CompiledCtx<Env>, Env> where Env: ExecutableDevEnv {
     }
 }
 */
-
+*/
 
 #[derive(Debug)]
 pub enum RunningError {
@@ -345,4 +346,4 @@ pub enum Error {
     CompileError(compile::Error),
     RunningError(RunningError),
 }
- */
+

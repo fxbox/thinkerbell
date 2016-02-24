@@ -8,7 +8,7 @@ serde = "0.6.13"
 serde_json = "0.6.0"
 serde_macros = "0.6.14"
 chrono = "0.2.19"
-fxbox_taxonomy = { git = "https://github.com/fxbox/taxonomy.git",  rev="951a3da" }
+fxbox_taxonomy = { git = "https://github.com/fxbox/taxonomy.git",  rev="a8c39ca" }
 
 [dev-dependencies]
 docopt = "0.6.78"

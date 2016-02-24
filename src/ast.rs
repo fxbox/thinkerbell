@@ -62,7 +62,7 @@ pub struct Conjunction<Ctx, Env> where Ctx: Context, Env: Default {
     pub all: Vec<Condition<Ctx, Env>>,
 
     #[serde(default)]
-    pub state: Ctx::ConditionState,
+    pub state: Ctx::ConjunctionState,
 
     #[serde(default)]
     #[allow(dead_code)]
@@ -117,7 +117,7 @@ pub struct Statement<Ctx, Env> where Ctx: Context, Env: Default {
 /// A manner of representing internal nodes.
 pub trait Context: Serialize + Deserialize + Default {
     /// A representation of the current state of a condition.
-    type ConditionState: Serialize + Deserialize + Default;
+    type ConjunctionState: Serialize + Deserialize + Default;
     type Inputs: Serialize + Deserialize + Default;
     type Outputs: Serialize + Deserialize + Default;
 }
@@ -127,8 +127,8 @@ pub trait Context: Serialize + Deserialize + Default {
 #[derive(Default, Serialize, Deserialize)]
 pub struct UncheckedCtx;
 impl Context for UncheckedCtx {
-    /// In this implementation, conditions have no state.
-    type ConditionState = ();
+    /// In this implementation, conjunctions have no state.
+    type ConjunctionState = ();
     type Inputs = InputRequest;
     type Outputs = OutputRequest;
 }

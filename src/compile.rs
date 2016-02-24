@@ -58,14 +58,14 @@ pub type CompiledOutputSet<Env> = Vec<Arc<CompiledOutput<Env>>>;
 */
 
 #[derive(Serialize, Deserialize)]
-pub struct CompiledConditionState {
+pub struct CompiledConjunctionState {
     /// `true` if the condition was met last time we evaluated it,
     /// `false` otherwise.
     pub is_met: bool
 }
-impl Default for CompiledConditionState {
+impl Default for CompiledConjunctionState {
     fn default() -> Self {
-        CompiledConditionState {
+        CompiledConjunctionState {
             is_met: true
         }
     }
@@ -80,7 +80,7 @@ impl<Env> Default for CompiledCtx<Env> where Env: Serialize + Deserialize {
 }
 
 impl<Env> Context for CompiledCtx<Env> where Env: Serialize + Deserialize {
-    type ConditionState = CompiledConditionState;
+    type ConjunctionState = CompiledConjunctionState;
     type Inputs = InputRequest;
     type Outputs = OutputRequest;
 }
@@ -126,7 +126,7 @@ impl<Env> Compiler<Env> where Env: ExecutableDevEnv {
         self.compile_script(script)
     }
 
-    pub fn compile_script(&self, script: Script<UncheckedCtx, UncheckedEnv>) -> Result<Script<CompiledCtx<Env>, Env>, Error>
+    fn compile_script(&self, script: Script<UncheckedCtx, UncheckedEnv>) -> Result<Script<CompiledCtx<Env>, Env>, Error>
     {
         if script.rules.len() == 0 {
             return Err(Error::SourceError(SourceError::NoRules));
@@ -140,7 +140,7 @@ impl<Env> Compiler<Env> where Env: ExecutableDevEnv {
         })
     }
 
-    pub fn compile_trigger(&self, trigger: Trigger<UncheckedCtx, UncheckedEnv>) -> Result<Trigger<CompiledCtx<Env>, Env>, Error>
+    fn compile_trigger(&self, trigger: Trigger<UncheckedCtx, UncheckedEnv>) -> Result<Trigger<CompiledCtx<Env>, Env>, Error>
     {
         if trigger.execute.len() == 0 {
             return Err(Error::SourceError(SourceError::NoStatements));
@@ -163,7 +163,7 @@ impl<Env> Compiler<Env> where Env: ExecutableDevEnv {
         }));
         Ok(Conjunction {
             all: all,
-            state: CompiledConditionState::default(),
+            state: CompiledConjunctionState::default(),
             phantom: Phantom::new(),
         })
     }

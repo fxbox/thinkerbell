@@ -21,13 +21,10 @@ pub enum Range {
 
 
     Eq(Value),
-
-
-    /// `Any` accepts all values.
-    Any,
 }
 
 impl Range {
+    /// Determine if a value is accepted by this range.
     pub fn contains(&self, value: &Value) -> bool {
         use self::Range::*;
         match *self {
@@ -36,24 +33,26 @@ impl Range {
             BetweenEq {ref min, ref max} => min <= value && value <= max,
             OutOfStrict {ref min, ref max} => value < min || max < value,
             Eq(ref val) => value == val,
-            Any => true
         }
     }
 
-    pub fn get_type(&self) -> Result<Option<Type>, ()> {
+    /// Get the type associated to this range.
+    ///
+    /// If this range has a `min` and a `max` with conflicting types,
+    /// produce an error.
+    pub fn get_type(&self) -> Result<Type, ()> {
         use self::Range::*;
         match *self {
-            Leq(ref v) | Geq(ref v) | Eq(ref v) => Ok(Some(v.get_type())),
+            Leq(ref v) | Geq(ref v) | Eq(ref v) => Ok(v.get_type()),
             BetweenEq{ref min, ref max} | OutOfStrict{ref min, ref max} => {
                 let min_typ = min.get_type();
                 let max_typ = max.get_type();
                 if min_typ == max_typ {
-                    Ok(Some(min_typ))
+                    Ok(min_typ)
                 } else {
                     Err(())
                 }
             }
-            Any => Ok(None)
         }
     }
 }

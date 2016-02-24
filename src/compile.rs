@@ -1,33 +1,46 @@
-use dependencies::DevEnv;
+//! A script compiler
+//!
+//! This compiler take untrusted code (`Script<UncheckedCtx,
+//! UncheckedEnv>`) and performs the following transformations and
+//! checks:
+//! - Ensure that the `Script` has at least one `Trigger`.
+//! - Ensure that each `Trigger `has at least one `Conjunction`.
+//! - Ensure that each `Conjunction` has at least one `Condition`.
+//! - Transform each `Condition` to make sure that the type of the
+//!   `range` matches the type of the `input`.
+//! - Ensure that in each `Statement`, the type of the `value` matches
+//!   the type of the `destination`.
+//! - Introduce markers to keep track of which conditions were already
+//!   met last time they were evaluated.
+
 use std::marker::PhantomData;
-use std::sync::{Arc, RwLock};
-use std::collections::HashMap;
 
-use ast::{Script, Resource, Trigger, Statement, Conjunction, Condition, Context, UncheckedCtx, UncheckedEnv};
-use util::map;
+use ast::{Script, Trigger, Statement, Conjunction, Condition, Context, UncheckedCtx, UncheckedEnv};
+use util::*;
 
-extern crate fxbox_taxonomy;
-use self::fxbox_taxonomy::values::*;
-use self::fxbox_taxonomy::devices::*;
-use self::fxbox_taxonomy::requests::*;
-use self::fxbox_taxonomy::util::Exactly;
+use fxbox_taxonomy::requests::*;
+use fxbox_taxonomy::api::API;
 
-extern crate chrono;
-use self::chrono::{DateTime, UTC};
+use serde::ser::{Serialize, Serializer};
+use serde::de::{Deserialize, Deserializer};
+
+
+/// The environment in which the code is meant to be executed.  This
+/// can typically be instantiated either with actual bindings to
+/// devices, or with a unit-testing framework. // FIXME: Move this to run.rs
+pub trait ExecutableDevEnv: Serialize + Deserialize + Default {
+    type WatchGuard;
+    type API: API<WatchGuard = Self::WatchGuard>;
+}
+
 
 ///
 /// # Precompilation
 ///
 
-/// Data, labelled with its latest update.
-pub struct DatedData {
-    pub updated: DateTime<UTC>,
-    pub data: Value,
-}
-
-
-pub struct CompiledCtx<DevEnv> {
-    phantom: PhantomData<DevEnv>,
+#[derive(Serialize, Deserialize)]
+pub struct CompiledCtx<Env> where Env: Serialize + Deserialize {
+    phantom: Phantom<Env>,
 }
 
 /*
@@ -43,235 +56,144 @@ pub struct CompiledOutput<Env> where Env: DevEnv {
 pub type CompiledInputSet<Env> = Vec<Arc<CompiledInput<Env>>>;
 pub type CompiledOutputSet<Env> = Vec<Arc<CompiledOutput<Env>>>;
 */
+
+#[derive(Serialize, Deserialize)]
 pub struct CompiledConditionState {
+    /// `true` if the condition was met last time we evaluated it,
+    /// `false` otherwise.
     pub is_met: bool
 }
-
-impl<Env> Context for CompiledCtx<Env> where Env: DevEnv {
-    type ConditionState = CompiledConditionState; // FIXME: We could share this
-    type ServiceKind = ServiceKind;
-    type Inputs = InputRequest; // FIXME: Monitor changes to the topology
-    type Outputs = OutputRequest; // FIXME: Monitor changes to the topology
+impl Default for CompiledConditionState {
+    fn default() -> Self {
+        CompiledConditionState {
+            is_met: true
+        }
+    }
 }
 
+/// We implement `Default` to keep derive happy, but this code should
+/// be unreachable.
+impl<Env> Default for CompiledCtx<Env> where Env: Serialize + Deserialize {
+    fn default() -> Self {
+        panic!("Called CompledCtx<_>::default()");
+    }
+}
+
+impl<Env> Context for CompiledCtx<Env> where Env: Serialize + Deserialize {
+    type ConditionState = CompiledConditionState;
+    type Inputs = InputRequest;
+    type Outputs = OutputRequest;
+}
 
 #[derive(Debug)]
 pub enum SourceError {
-    AllocationLengthError { allocations: usize, requirements: usize},
-    NoCapability, // FIXME: Add details
-    NoSuchInput, // FIXME: Add details
-    NoSuchOutput, // FIXME: Add details
-}
+    /// The source doesn't define any rule.
+    NoRules,
 
-#[derive(Debug)]
-pub enum ServiceError {
-    NoSuchService(String),
+    /// A rule doesn't have any statements.
+    NoStatements,
 }
 
 #[derive(Debug)]
 pub enum TypeError {
-    RequestHasConflictingKind(String),
-    RangeHasConflictingType,
-    RangeHasNoType(String),
+    /// The range cannot be typed.
+    InvalidRange,
+
+    /// The range has one type but this type is incompatible with the
+    /// kind of the `Condition`.
+    KindAndRangeDoNotAgree,
 }
 
 #[derive(Debug)]
 pub enum Error {
     SourceError(SourceError),
-    ServiceError(ServiceError),
     TypeError(TypeError),
 }
 
-pub struct Precompiler<Env> where Env: self::fxbox_taxonomy::api::API {
+pub struct Compiler<Env> where Env: ExecutableDevEnv {
     phantom: PhantomData<Env>,
 }
 
-impl<Env> Precompiler<Env> where Env: self::fxbox_taxonomy::api::API {
-    pub fn new(source: &Script<UncheckedCtx, UncheckedEnv>) -> Result<Self, Error> {
-        Ok(Precompiler {
+impl<Env> Compiler<Env> where Env: ExecutableDevEnv {
+    pub fn new() -> Result<Self, Error> {
+        Ok(Compiler {
             phantom: PhantomData
         })
     }
 
-    pub fn rebind_script(&self, env: &Env, script: Script<UncheckedCtx, UncheckedEnv>) -> Result<Script<CompiledCtx<Env>, Env>, Error>
-    {
-        unimplemented!()
-            /*
-        if self.rules.len() == 0 {
-            return Err(SourceError::NoRules);
-        }
-        if self.inputs.len() == 0 {
-            return Err(SourceError::NoInputs);
-        }
-        if self.outputs.len() == 0 {
-            return Err(SourceError::NoOutputs);
-        }
-
-        let service_api = env.get_service_api();
-
-        let rules = try!(map(script.rules, |rule| self.rebind_trigger(rule)));
-
-        let inputs = try!(map(self.inputs, |resource| {
-            // Check that all inputs have the same ServiceKind
-            let mut kind = None;
-            let services = try!(map(resource.services, |id| {
-                let mut devices = env.get_service_api().get_input_services(
-                    InputRequest::new()
-                        .with_id(ServiceId::new(id)));
-                if devices.len() == 0 {
-                    return Err(DevAccessError::NoSuchInput); // FIXME: Annotate id?
-                }
-                assert!(devices.len() == 1);
-                let device = devices.pop();
-                match kind.take() {
-                    None => { kind = Some(device.kind.clone()); },
-                    Some(k) => {
-                        if k != device.kind {
-                            return Err(DevAccessError::IncompatibleKind);
-                        }
-                    }
-                }
-                Ok(device.id)
-            }));
-            // FIXME: Check that all have the same ServiceKind.
-            // FIXME:
-        }));
-
-        Ok(Script {
-            metadata: (),
-            rules: rules
-        })
-*/
+    pub fn compile(&self, script: Script<UncheckedCtx, UncheckedEnv>)
+                   -> Result<Script<CompiledCtx<Env>, Env>, Error> {
+        self.compile_script(script)
     }
 
-    fn rebind_trigger(&self, trigger: Trigger<UncheckedCtx, UncheckedEnv>) -> Result<Trigger<CompiledCtx<Env>, Env>, Error>
+    pub fn compile_script(&self, script: Script<UncheckedCtx, UncheckedEnv>) -> Result<Script<CompiledCtx<Env>, Env>, Error>
     {
-/*
+        if script.rules.len() == 0 {
+            return Err(Error::SourceError(SourceError::NoRules));
+        }
+        let rules = try!(map(script.rules, |rule| {
+            self.compile_trigger(rule)
+        }));
+        Ok(Script {
+            rules: rules,
+            phantom: Phantom::new()
+        })
+    }
+
+    pub fn compile_trigger(&self, trigger: Trigger<UncheckedCtx, UncheckedEnv>) -> Result<Trigger<CompiledCtx<Env>, Env>, Error>
+    {
+        if trigger.execute.len() == 0 {
+            return Err(Error::SourceError(SourceError::NoStatements));
+        }
+        let condition = try!(self.compile_conjunction(trigger.condition));
         let execute = try!(map(trigger.execute, |statement| {
-            self.rebind_statement(statement)
+            self.compile_statement(statement)
         }));
         Ok(Trigger {
+            condition: condition,
             execute: execute,
-            condition: try!(self.rebind_conjunction(trigger.condition))
+            phantom: Phantom::new()
         })
-         */
-        unimplemented!()
     }
 
-    fn rebind_conjunction(&self, conjunction: Conjunction<UncheckedCtx, UncheckedEnv>) -> Result<Conjunction<CompiledCtx<Env>, Env>, Error>
+    fn compile_conjunction(&self, conjunction: Conjunction<UncheckedCtx, UncheckedEnv>) -> Result<Conjunction<CompiledCtx<Env>, Env>, Error>
     {
-        /*
         let all = try!(map(conjunction.all, |condition| {
-            self.rebind_condition(condition)
+            self.compile_condition(condition)
         }));
         Ok(Conjunction {
             all: all,
-            state: try!(self.rebind_condition_state(conjunction.state))
+            state: CompiledConditionState::default(),
+            phantom: Phantom::new(),
         })
-         */
-        unimplemented!()
     }
 
-    fn rebind_condition(&self, env: &Env, condition: Condition<UncheckedCtx, UncheckedEnv>) -> Result<Condition<CompiledCtx<Env>, Env>, Error>
+    fn compile_condition(&self, condition: Condition<UncheckedCtx, UncheckedEnv>) -> Result<Condition<CompiledCtx<Env>, Env>, Error>
     {
-        // Normalize kind and check that the list of devices is
-        // currently non-empty.
-        // FIXME: We should also re-check when the topology changes.
-
-        let kind = match env.get_service_api()
-            .get_input_services(condition.request.clone())
-            .iter().fold(Exactly::Empty, |(kind, dev)| {
-                kind.and(dev.kind)
-            }) {
-                Exactly::Empty => return Err(Error::ServiceError(ServiceError::NoSuchService(format!("{:?}", &condition.request())))),
-                Exactly::Conflict => return Err(Error::TypeError(TypeError::RequestHasConflictingKind(format!("{:?}", &condition.request())))),
-                Exactly::Exactly(k) => k
+        let typ = match condition.range.get_type() {
+            Err(_) => return Err(Error::TypeError(TypeError::InvalidRange)),
+            Ok(typ) => typ
         };
-
-        // Make sure that future tagging does not cause kind errors.
-        let input = condition.request.with_kind(kind);
-
-        // Check that the range and the type of `kind` agree.
-        match condition.range.get_type() {
-            Ok(None) => {},
-            Ok(Some(typ)) => {
-                if typ != kind.get_type() {
-                    return Err(Error::TypeError(TypeError::RangeHasConflictingType))
-                }
-            },
-            Err(err) => return Err(Error::TypeError(TypeError::RangeHasNoType(err)))
-        };
-
+        if condition.kind.get_type() != typ {
+            return Err(Error::TypeError(TypeError::KindAndRangeDoNotAgree));
+        }
+        let input = condition.input.with_kind(condition.kind.clone());
         Ok(Condition {
             input: input,
+            kind: condition.kind,
             range: condition.range,
-            state: CompiledConditionState { is_met: false }
+            phantom: Phantom::new()
         })
     }
 
-    fn rebind_statement(&self, statement: Statement<UncheckedCtx, UncheckedEnv>) -> Result<Statement<CompiledCtx<Env>, Env>, Error>
+    fn compile_statement(&self, statement: Statement<UncheckedCtx, UncheckedEnv>) -> Result<Statement<CompiledCtx<Env>, Env>, Error>
     {
-        /*
-        let mut arguments = HashMap::with_capacity(statement.arguments.len());
-        for (key, expr) in statement.arguments {
-            arguments.insert(key.clone(), try!(self.rebind_expression(expr)));
-        }
+        let destination = statement.destination.with_kind(statement.kind.clone());
         Ok(Statement {
-            destination: try!(self.rebind_output(statement.destination)),
-            action: try!(self.rebind_output_capability(statement.action)),
-            arguments: arguments
+            destination: destination,
+            value: statement.value,
+            kind: statement.kind,
+            phantom: Phantom::new()
         })
-         */
-        unimplemented!()
     }
-
-/*
-    fn rebind_device(&self, dev: <UncheckedEnv as DevEnv>::Device) -> Result<Env::Device, Error>
-    {
-        unimplemented!()
-        /*
-        match Env::get_device(&dev) {
-            None => Err(Error::DevAccessError(DevAccessError::DeviceNotFound)),
-            Some(found) => Ok(found.clone())
-        }
-*/
-    }
-
-
-    fn rebind_device_kind(&self, kind: <UncheckedEnv as DevEnv>::DeviceKind) ->
-        Result<Env::DeviceKind, Error>
-    {
-        unimplemented!()
-        /*
-        match Env::get_device_kind(&kind) {
-            None => Err(Error::DevAccessError(DevAccessError::DeviceKindNotFound)),
-            Some(found) => Ok(found.clone())
-        }
-*/
-    }
-    
-    fn rebind_input_capability(&self, cap: <UncheckedEnv as DevEnv>::InputCapability) ->
-        Result<Env::InputCapability, Error>
-    {
-        unimplemented!()
-            /*
-        match Env::get_input_capability(&cap) {
-            None => Err(Error::DevAccessError(DevAccessError::DeviceCapabilityNotFound)),
-            Some(found) => Ok(found.clone())
-        }
-*/
-    }
-
-    fn rebind_output_capability(&self, cap: <UncheckedEnv as DevEnv>::OutputCapability) ->
-        Result<Env::OutputCapability, Error>
-    {
-        unimplemented!()
-            /*
-        match Env::get_output_capability(&cap) {
-            None => Err(Error::DevAccessError(DevAccessError::DeviceCapabilityNotFound)),
-            Some(found) => Ok(found.clone())
-        }
-         */
-    }
-*/
 }

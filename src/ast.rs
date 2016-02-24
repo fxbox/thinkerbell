@@ -5,7 +5,6 @@
 /// complex monitors can installed from the web from a master device
 /// (i.e. the user's cellphone or smart tv).
 
-use dependencies::DevEnv;
 use values::Range;
 use util::Phantom;
 
@@ -32,7 +31,7 @@ use serde::de::{Deserialize, Deserializer, Error};
 /// either be part of a broader application (which can install them
 /// through a web/REST API) or live on their own.
 #[derive(Serialize, Deserialize)]
-pub struct Script<Ctx, Env> where Env: DevEnv, Ctx: Context {
+pub struct Script<Ctx, Env> where Ctx: Context, Env: Default {
     /// A set of rules, stating what must be done in which circumstance.
     pub rules: Vec<Trigger<Ctx, Env>>,
 
@@ -41,32 +40,10 @@ pub struct Script<Ctx, Env> where Env: DevEnv, Ctx: Context {
     pub phantom: Phantom<(Ctx, Env)>,
 }
 
-/// A set of similar input services used together to provide a single
-/// piece of information. For instance, a set of fire detectors.
-///
-/// All input services grouped as a resource must provide the same
-/// service.
-#[derive(Serialize, Deserialize)]
-pub struct Resource<IO, Ctx, Env> where Env: DevEnv, Ctx: Context, IO: Deserialize + Default {
-    /// The kind of service provided by this resource. During
-    /// compilation, we make sure that each resource provides this
-    /// service. // FIXME: Implement
-    #[serde(default)]
-    pub kind: Ctx::ServiceKind, // FIXME: Empty initially
-
-    /// The actual list of endpoints. Must be non-empty. During
-    /// compilation, we make sure that each resource appears only
-    /// once. // FIXME: Implement.
-    pub services: Vec<ServiceId>,
-
-    #[serde(default)]
-    pub phantom: Phantom<(IO, Ctx, Env)>,
-}
-
 /// A single trigger, i.e. "when some condition becomes true, do
 /// something".
 #[derive(Serialize, Deserialize)]
-pub struct Trigger<Ctx, Env> where Env: DevEnv, Ctx: Context {
+pub struct Trigger<Ctx, Env> where Ctx: Context, Env: Default {
     /// The condition in which to execute the trigger.
     pub condition: Conjunction<Ctx, Env>,
 
@@ -80,7 +57,7 @@ pub struct Trigger<Ctx, Env> where Env: DevEnv, Ctx: Context {
 
 /// A conjunction (e.g. a "and") of conditions.
 #[derive(Serialize, Deserialize)]
-pub struct Conjunction<Ctx, Env> where Env: DevEnv, Ctx: Context {
+pub struct Conjunction<Ctx, Env> where Ctx: Context, Env: Default {
     /// The conjunction is true iff all of the following expressions evaluate to true.
     pub all: Vec<Condition<Ctx, Env>>,
 
@@ -100,12 +77,13 @@ pub struct Conjunction<Ctx, Env> where Env: DevEnv, Ctx: Context {
 /// A condition is true if *any* of the corresponding input services
 /// yielded a value that is in the given range.
 #[derive(Serialize, Deserialize)]
-pub struct Condition<Ctx, Env> where Env: DevEnv, Ctx: Context {
+pub struct Condition<Ctx, Env> where Ctx: Context, Env: Default {
     /// The set of inputs to watch. Note that the set of inputs may
     /// change (e.g. when devices are relabelled) without rebooting
     /// the script.
     pub input: Ctx::Inputs,
 
+    pub kind: ServiceKind,
     /// The range of values for which the condition is considered met.
     /// During compilation, we check that the type of `range` is
     /// compatible with that of `input`. // FIXME: Implement
@@ -119,7 +97,7 @@ pub struct Condition<Ctx, Env> where Env: DevEnv, Ctx: Context {
 
 /// Stuff to actually do. In practice, this means placing calls to devices.
 #[derive(Serialize, Deserialize)]
-pub struct Statement<Ctx, Env> where Env: DevEnv, Ctx: Context {
+pub struct Statement<Ctx, Env> where Ctx: Context, Env: Default {
     /// The resource to which this command applies.
     pub destination: Ctx::Outputs,
 
@@ -127,6 +105,8 @@ pub struct Statement<Ctx, Env> where Env: DevEnv, Ctx: Context {
     /// that the type of `value` is compatible with that of
     /// `destination`. // FIXME: Implement
     pub value: Value,
+
+    pub kind: ServiceKind,
 
     #[serde(default)]
     #[allow(dead_code)]
@@ -140,7 +120,6 @@ pub trait Context: Serialize + Deserialize + Default {
     type ConditionState: Serialize + Deserialize + Default;
     type Inputs: Serialize + Deserialize + Default;
     type Outputs: Serialize + Deserialize + Default;
-    type ServiceKind: Serialize + Deserialize + Default;
 }
 
 /// A Context used to represent a script that hasn't been compiled
@@ -152,7 +131,6 @@ impl Context for UncheckedCtx {
     type ConditionState = ();
     type Inputs = InputRequest;
     type Outputs = OutputRequest;
-    type ServiceKind = ();
 }
 
 /// A DevEnv used to represent a script that hasn't been
@@ -160,5 +138,3 @@ impl Context for UncheckedCtx {
 /// etc. everything is represented by a string.
 #[derive(Default, Serialize, Deserialize)]
 pub struct UncheckedEnv;
-impl DevEnv for UncheckedEnv {
-}

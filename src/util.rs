@@ -1,5 +1,5 @@
 use serde::ser::{Serialize, Serializer};
-use serde::de::{Deserialize, Deserializer, Error};
+use serde::de::{Deserialize, Deserializer};
 
 use std::marker::PhantomData;
 
@@ -28,14 +28,14 @@ impl<T> Phantom<T> {
 }
 
 impl<T> Serialize for Phantom<T> {
-    fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
+    fn serialize<S>(&self, _: &mut S) -> Result<(), S::Error>
         where S: Serializer {
         // Nothing to write.
         Ok(())
     }
 }
 impl<T> Deserialize for Phantom<T> {
-    fn deserialize<D>(deserializer: &mut D) -> Result<Self, D::Error>
+    fn deserialize<D>(_: &mut D) -> Result<Self, D::Error>
         where D: Deserializer {
         // Nothing to consume
         Ok(Phantom {

@@ -31,53 +31,43 @@ use serde::de::{Deserialize, Deserializer, Error};
 /// either be part of a broader application (which can install them
 /// through a web/REST API) or live on their own.
 #[derive(Serialize, Deserialize)]
-pub struct Script<Ctx, Env> where Ctx: Context, Env: Default {
+pub struct Script<Ctx> where Ctx: Context {
     /// A set of rules, stating what must be done in which circumstance.
-    pub rules: Vec<Trigger<Ctx, Env>>,
+    pub rules: Vec<Rule<Ctx>>,
 
     #[serde(default)]
     #[allow(dead_code)]
-    pub phantom: Phantom<(Ctx, Env)>,
+    pub phantom: Phantom<Ctx>,
 }
 
 /// A single trigger, i.e. "when some condition becomes true, do
 /// something".
 #[derive(Serialize, Deserialize)]
-pub struct Trigger<Ctx, Env> where Ctx: Context, Env: Default {
-    /// The condition in which to execute the trigger.
-    pub condition: Conjunction<Ctx, Env>,
+pub struct Rule<Ctx> where Ctx: Context {
+    /// The condition in which to execute the trigger. *All* conditions
+    /// must be matched before we execute the statements.
+    pub conditions: Vec<Match<Ctx>>,
 
     /// Stuff to do once `condition` is met.
-    pub execute: Vec<Statement<Ctx, Env>>,
+    pub execute: Vec<Statement<Ctx>>,
+
+    #[serde(default)]
+    pub state: Ctx::RuleState,
 
     #[serde(default)]
     #[allow(dead_code)]
-    pub phantom: Phantom<(Ctx, Env)>,
-}
-
-/// A conjunction (e.g. a "and") of conditions.
-#[derive(Serialize, Deserialize)]
-pub struct Conjunction<Ctx, Env> where Ctx: Context, Env: Default {
-    /// The conjunction is true iff all of the following expressions evaluate to true.
-    pub all: Vec<Condition<Ctx, Env>>,
-
-    #[serde(default)]
-    pub state: Ctx::ConjunctionState,
-
-    #[serde(default)]
-    #[allow(dead_code)]
-    pub phantom: Phantom<(Ctx, Env)>,
+    pub phantom: Phantom<Ctx>,
 }
 
 /// An individual condition.
 ///
-/// Conditions always take the form: "data received from input service
+/// Matchs always take the form: "data received from input service
 /// is in given range".
 ///
 /// A condition is true if *any* of the corresponding input services
 /// yielded a value that is in the given range.
 #[derive(Serialize, Deserialize)]
-pub struct Condition<Ctx, Env> where Ctx: Context, Env: Default {
+pub struct Match<Ctx> where Ctx: Context {
     /// The set of inputs to watch. Note that the set of inputs may
     /// change (e.g. when devices are relabelled) without rebooting
     /// the script.
@@ -91,13 +81,13 @@ pub struct Condition<Ctx, Env> where Ctx: Context, Env: Default {
 
     #[serde(default)]
     #[allow(dead_code)]
-    pub phantom: Phantom<(Ctx, Env)>,
+    pub phantom: Phantom<Ctx>,
 }
 
 
 /// Stuff to actually do. In practice, this means placing calls to devices.
 #[derive(Serialize, Deserialize)]
-pub struct Statement<Ctx, Env> where Ctx: Context, Env: Default {
+pub struct Statement<Ctx> where Ctx: Context {
     /// The resource to which this command applies.
     pub destination: Ctx::Outputs,
 
@@ -110,14 +100,14 @@ pub struct Statement<Ctx, Env> where Ctx: Context, Env: Default {
 
     #[serde(default)]
     #[allow(dead_code)]
-    pub phantom: Phantom<(Ctx, Env)>,
+    pub phantom: Phantom<Ctx>,
 }
 
 
 /// A manner of representing internal nodes.
 pub trait Context: Serialize + Deserialize + Default {
     /// A representation of the current state of a condition.
-    type ConjunctionState: Serialize + Deserialize + Default;
+    type RuleState: Serialize + Deserialize + Default;
     type Inputs: Serialize + Deserialize + Default;
     type Outputs: Serialize + Deserialize + Default;
 }
@@ -127,14 +117,8 @@ pub trait Context: Serialize + Deserialize + Default {
 #[derive(Default, Serialize, Deserialize)]
 pub struct UncheckedCtx;
 impl Context for UncheckedCtx {
-    /// In this implementation, conjunctions have no state.
-    type ConjunctionState = ();
+    /// In this implementation, triggers have no state.
+    type RuleState = ();
     type Inputs = InputRequest;
     type Outputs = OutputRequest;
 }
-
-/// A DevEnv used to represent a script that hasn't been
-/// compiled yet. Rather than having typed devices, capabilities,
-/// etc. everything is represented by a string.
-#[derive(Default, Serialize, Deserialize)]
-pub struct UncheckedEnv;

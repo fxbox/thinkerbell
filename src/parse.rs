@@ -1,4 +1,4 @@
-use ast::{Script, UncheckedEnv, UncheckedCtx};
+use ast::{Script, UncheckedCtx};
 
 extern crate serde_json;
 
@@ -7,7 +7,7 @@ pub struct Parser;
 
 impl Parser {
     /// Attempt to parse a string to an unchecked script.
-    pub fn parse(str: String) -> Result<Script<UncheckedCtx, UncheckedEnv>, serde_json::error::Error> {
+    pub fn parse(str: String) -> Result<Script<UncheckedCtx>, serde_json::error::Error> {
         self::serde_json::from_str(&str)
     }
 }

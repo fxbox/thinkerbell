@@ -1,6 +1,6 @@
 //! Launching and running the script
 
-use ast::{Script, Trigger, Statement, Conjunction, Condition, UncheckedCtx, UncheckedEnv};
+use ast::{Script, Rule, Statement, Match, UncheckedCtx};
 use compile::{Compiler, CompiledCtx, ExecutableDevEnv};
 use compile;
 
@@ -42,7 +42,7 @@ impl<Env> Execution<Env> where Env: ExecutableDevEnv + 'static {
     /// # Errors
     ///
     /// Produces RunningError:AlreadyRunning if the script is already running.
-    pub fn start<F>(&mut self, script: Script<UncheckedCtx, UncheckedEnv>, on_result: F) where F: FnOnce(Result<(), Error>) + Send + 'static {
+    pub fn start<F>(&mut self, script: Script<UncheckedCtx>, on_result: F) where F: FnOnce(Result<(), Error>) + Send + 'static {
         if self.command_sender.is_some() {
             on_result(Err(Error::RunningError(RunningError::AlreadyRunning)));
             return;
@@ -94,7 +94,7 @@ impl<Env> Drop for Execution<Env> where Env: ExecutableDevEnv + 'static {
 /// executed in an individual thread.
 pub struct ExecutionTask<Env> where Env: ExecutableDevEnv {
     /// The script, annotated with its state.
-    state: Script<CompiledCtx<Env>, Env>,
+    state: Script<CompiledCtx<Env>>,
 
     /// Communicating with the thread running script.
     tx: Sender<ExecutionOp>,
@@ -120,7 +120,7 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
     ///
     /// The caller is responsible for spawning a new thread and
     /// calling `run()`.
-    fn new(script: Script<UncheckedCtx, UncheckedEnv>, tx: Sender<ExecutionOp>, rx: Receiver<ExecutionOp>) -> Result<Self, Error> {
+    fn new(script: Script<UncheckedCtx>, tx: Sender<ExecutionOp>, rx: Receiver<ExecutionOp>) -> Result<Self, Error> {
         let compiler = try!(Compiler::new().map_err(|err| Error::CompileError(err)));
         let state = try!(compiler.compile(script).map_err(|err| Error::CompileError(err)));
         
@@ -138,7 +138,7 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
 
         // Start listening to all inputs that appear in conditions.
         for rule in &self.state.rules  {
-            for condition in &rule.condition.all {
+            for condition in &rule.conditions {
 
                 // The latest values received from the inputs.
                 let mut values = HashMap::new();
@@ -172,7 +172,11 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
                                     // empty, in case we received messages in
                                     // the wrong order.
                                     values.insert(id, Some(value));
-                                    // FIXME: Now check whether the condition is met.
+                                    // FIXME: Actually, we don't really need `values`, do we? Ah, yes, we do.
+
+                                    
+                                    // FIXME: Check if `condition` switches from false to true
+                                    // FIXME: Check if `conjunction` switches from false to true
                                 }
                             }
                         }));
@@ -250,14 +254,14 @@ struct IsMet {
     new: bool,
 }
 
-impl<Env> Trigger<CompiledCtx<Env>, Env> where Env: DevEnv {
+impl<Env> Rule<CompiledCtx<Env>> where Env: DevEnv {
     fn is_met(&mut self) -> IsMet {
         self.condition.is_met()
     }
 }
 
 
-impl<Env> Conjunction<CompiledCtx<Env>, Env> where Env: DevEnv {
+impl<Env> Conjunction<CompiledCtx<Env>> where Env: DevEnv {
     /// For a conjunction to be true, all its components must be true.
     fn is_met(&mut self) -> IsMet {
         let old = self.state.is_met;
@@ -279,7 +283,7 @@ impl<Env> Conjunction<CompiledCtx<Env>, Env> where Env: DevEnv {
 }
 
 
-impl<Env> Condition<CompiledCtx<Env>, Env> where Env: DevEnv {
+impl<Env> Condition<CompiledCtx<Env>> where Env: DevEnv {
     /// Determine if one of the devices serving as input for this
     /// condition meets the condition.
     fn is_met(&mut self) -> IsMet {
@@ -308,7 +312,7 @@ impl<Env> Condition<CompiledCtx<Env>, Env> where Env: DevEnv {
     }
 }
 
-impl<Env> Statement<CompiledCtx<Env>, Env> where Env: ExecutableDevEnv {
+impl<Env> Statement<CompiledCtx<Env>> where Env: ExecutableDevEnv {
     fn eval(&self) -> Result<(), Error> {
         let args = self.arguments.iter().map(|(k, v)| {
             (k.clone(), v.eval())
@@ -321,7 +325,7 @@ impl<Env> Statement<CompiledCtx<Env>, Env> where Env: ExecutableDevEnv {
 }
 
 /*
-impl<Env> Expression<CompiledCtx<Env>, Env> where Env: ExecutableDevEnv {
+impl<Env> Expression<CompiledCtx<Env>> where Env: ExecutableDevEnv {
     fn eval(&self) -> Value {
         match *self {
             Expression::Value(ref v) => v.clone(),

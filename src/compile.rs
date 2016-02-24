@@ -3,8 +3,8 @@
 //! This compiler take untrusted code (`Script<UncheckedCtx,
 //! UncheckedEnv>`) and performs the following transformations and
 //! checks:
-//! - Ensure that the `Script` has at least one `Trigger`.
-//! - Ensure that each `Trigger `has at least one `Conjunction`.
+//! - Ensure that the `Script` has at least one `Rule`.
+//! - Ensure that each `Rule `has at least one `Conjunction`.
 //! - Ensure that each `Conjunction` has at least one `Condition`.
 //! - Transform each `Condition` to make sure that the type of the
 //!   `range` matches the type of the `input`.
@@ -15,7 +15,7 @@
 
 use std::marker::PhantomData;
 
-use ast::{Script, Trigger, Statement, Conjunction, Condition, Context, UncheckedCtx, UncheckedEnv};
+use ast::{Script, Rule, Statement, Match, Context, UncheckedCtx};
 use util::*;
 
 use fxbox_taxonomy::requests::*;
@@ -58,16 +58,21 @@ pub type CompiledOutputSet<Env> = Vec<Arc<CompiledOutput<Env>>>;
 */
 
 #[derive(Serialize, Deserialize)]
-pub struct CompiledConjunctionState {
+pub struct RuleState { // FIXME: We might be able to do without.
     /// `true` if the condition was met last time we evaluated it,
     /// `false` otherwise.
     pub is_met: bool
 }
-impl Default for CompiledConjunctionState {
-    fn default() -> Self {
-        CompiledConjunctionState {
+impl RuleState {
+    fn new() -> Self {
+        RuleState {
             is_met: true
         }
+    }
+}
+impl Default for RuleState {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -80,7 +85,7 @@ impl<Env> Default for CompiledCtx<Env> where Env: Serialize + Deserialize {
 }
 
 impl<Env> Context for CompiledCtx<Env> where Env: Serialize + Deserialize {
-    type ConjunctionState = CompiledConjunctionState;
+    type RuleState = RuleState;
     type Inputs = InputRequest;
     type Outputs = OutputRequest;
 }
@@ -92,6 +97,9 @@ pub enum SourceError {
 
     /// A rule doesn't have any statements.
     NoStatements,
+
+    /// A rule doesn't have any condition.
+    NoConditions,
 }
 
 #[derive(Debug)]
@@ -121,12 +129,12 @@ impl<Env> Compiler<Env> where Env: ExecutableDevEnv {
         })
     }
 
-    pub fn compile(&self, script: Script<UncheckedCtx, UncheckedEnv>)
-                   -> Result<Script<CompiledCtx<Env>, Env>, Error> {
+    pub fn compile(&self, script: Script<UncheckedCtx>)
+                   -> Result<Script<CompiledCtx<Env>>, Error> {
         self.compile_script(script)
     }
 
-    fn compile_script(&self, script: Script<UncheckedCtx, UncheckedEnv>) -> Result<Script<CompiledCtx<Env>, Env>, Error>
+    fn compile_script(&self, script: Script<UncheckedCtx>) -> Result<Script<CompiledCtx<Env>>, Error>
     {
         if script.rules.len() == 0 {
             return Err(Error::SourceError(SourceError::NoRules));
@@ -140,53 +148,47 @@ impl<Env> Compiler<Env> where Env: ExecutableDevEnv {
         })
     }
 
-    fn compile_trigger(&self, trigger: Trigger<UncheckedCtx, UncheckedEnv>) -> Result<Trigger<CompiledCtx<Env>, Env>, Error>
+    fn compile_trigger(&self, trigger: Rule<UncheckedCtx>) -> Result<Rule<CompiledCtx<Env>>, Error>
     {
         if trigger.execute.len() == 0 {
             return Err(Error::SourceError(SourceError::NoStatements));
         }
-        let condition = try!(self.compile_conjunction(trigger.condition));
+        if trigger.conditions.len() == 0 {
+            return Err(Error::SourceError(SourceError::NoConditions));
+        }
+        let conditions = try!(map(trigger.conditions, |match_| {
+            self.compile_match(match_)
+        }));
         let execute = try!(map(trigger.execute, |statement| {
             self.compile_statement(statement)
         }));
-        Ok(Trigger {
-            condition: condition,
+        Ok(Rule {
+            conditions: conditions,
             execute: execute,
+            state: RuleState::new(),
             phantom: Phantom::new()
         })
     }
 
-    fn compile_conjunction(&self, conjunction: Conjunction<UncheckedCtx, UncheckedEnv>) -> Result<Conjunction<CompiledCtx<Env>, Env>, Error>
+    fn compile_match(&self, match_: Match<UncheckedCtx>) -> Result<Match<CompiledCtx<Env>>, Error>
     {
-        let all = try!(map(conjunction.all, |condition| {
-            self.compile_condition(condition)
-        }));
-        Ok(Conjunction {
-            all: all,
-            state: CompiledConjunctionState::default(),
-            phantom: Phantom::new(),
-        })
-    }
-
-    fn compile_condition(&self, condition: Condition<UncheckedCtx, UncheckedEnv>) -> Result<Condition<CompiledCtx<Env>, Env>, Error>
-    {
-        let typ = match condition.range.get_type() {
+        let typ = match match_.range.get_type() {
             Err(_) => return Err(Error::TypeError(TypeError::InvalidRange)),
             Ok(typ) => typ
         };
-        if condition.kind.get_type() != typ {
+        if match_.kind.get_type() != typ {
             return Err(Error::TypeError(TypeError::KindAndRangeDoNotAgree));
         }
-        let input = condition.input.with_kind(condition.kind.clone());
-        Ok(Condition {
+        let input = match_.input.with_kind(match_.kind.clone());
+        Ok(Match {
             input: input,
-            kind: condition.kind,
-            range: condition.range,
+            kind: match_.kind,
+            range: match_.range,
             phantom: Phantom::new()
         })
     }
 
-    fn compile_statement(&self, statement: Statement<UncheckedCtx, UncheckedEnv>) -> Result<Statement<CompiledCtx<Env>, Env>, Error>
+    fn compile_statement(&self, statement: Statement<UncheckedCtx>) -> Result<Statement<CompiledCtx<Env>>, Error>
     {
         let destination = statement.destination.with_kind(statement.kind.clone());
         Ok(Statement {

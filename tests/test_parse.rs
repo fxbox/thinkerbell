@@ -35,45 +35,13 @@ fn test_parse_empty() {
 
 #[test]
 fn test_parse_simple_rule() {
-/*
-    let script : Script<UncheckedCtx, UncheckedEnv> = Script {
-        rules: vec![
-            Trigger {
-                condition: Conjunction {
-                    all: vec! [
-                        Condition {
-                            input: InputRequest::new(),
-                            range: Range::Any,
-                            phantom: Phantom::new(),
-                        }],
-                    state: (),
-                    phantom: Phantom::new()
-                },
-                execute: vec![],
-                phantom: Phantom::new()
-            }],
-        phantom: Phantom::new()
-    };
-    println!("Converting to value\n");
-    let val = serde_json::to_value(&script);
-    println!("Converting to string {}\n", val.as_string().unwrap());
-*/
-    
     let src =
 "{
   \"rules\": [
     {
       \"execute\": [],
-      \"condition\": {
-        \"all\": [
-          {
-            \"input\": {},
-            \"range\": {
-              \"Any\": []
-            }
-          }
-        ]
-      }
+      \"conditions\": [
+      ]
     }
   ]
 }".to_owned();

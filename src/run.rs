@@ -35,9 +35,11 @@ impl<Env> Execution<Env> where Env: ExecutableDevEnv + 'static {
     /// # Errors
     ///
     /// Produces RunningError:AlreadyRunning if the script is already running.
-    pub fn start<F>(&mut self, script: Script<UncheckedCtx>, on_result: F) where F: FnOnce(Result<(), Error>) + Send + 'static {
+    pub fn start<F>(&mut self, script: Script<UncheckedCtx>, on_event: F) where F: Fn(ExecutionEvent) + Send + 'static {
         if self.command_sender.is_some() {
-            on_result(Err(Error::RunningError(RunningError::AlreadyRunning)));
+            on_event(ExecutionEvent::Starting {
+                result: Err(Error::RunningError(RunningError::AlreadyRunning))
+            });
             return;
         }
         let (tx, rx) = channel();
@@ -46,11 +48,15 @@ impl<Env> Execution<Env> where Env: ExecutableDevEnv + 'static {
         thread::spawn(move || {
             match ExecutionTask::<Env>::new(script, tx2, rx) {
                 Err(er) => {
-                    on_result(Err(er));
+                    on_event(ExecutionEvent::Starting {
+                        result: Err(er)
+                    });
                 },
                 Ok(mut task) => {
-                    on_result(Ok(()));
-                    task.run();
+                    on_event(ExecutionEvent::Starting {
+                        result: Ok(())
+                    });
+                    task.run(on_event);
                 }
             }
         });
@@ -94,8 +100,24 @@ pub struct ExecutionTask<Env> where Env: ExecutableDevEnv {
     rx: Receiver<ExecutionOp>,
 }
 
-
-
+pub enum ExecutionEvent {
+    Starting {
+        result: Result<(), Error>,
+    },
+    Stopped {
+        result: Result<(), Error>
+    },
+    Updated {
+        event: WatchEvent,
+        rule_index: usize,
+        condition_index: usize
+    },
+    Sent {
+        rule_index: usize,
+        statement_index: usize,
+        result: Vec<(ServiceId, Result<(), Error>)>
+    }
+}
 
 
 enum ExecutionOp {
@@ -123,7 +145,7 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
 
     /// Execute the monitoring task.
     /// This currently expects to be executed in its own thread.
-    fn run(&mut self) {
+    fn run<F>(&mut self, on_event: F) where F: Fn(ExecutionEvent) {
 
         let mut witnesses = Vec::new();
 
@@ -262,8 +284,13 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
 
                         if !condition_was_met && condition_is_met {
                             // Ahah, we have just triggered the statements!
-                            for statement in &self.state.rules[rule_index].execute {
-                                let _ignore = statement.eval(); // FIXME: Report errors
+                            for (statement, statement_index) in self.state.rules[rule_index].execute.iter().zip(0..) {
+                                let result = statement.eval();
+                                on_event(ExecutionEvent::Sent {
+                                    rule_index: rule_index,
+                                    statement_index: statement_index,
+                                    result: result,
+                                });
                             }
                         }
                     }
@@ -275,10 +302,12 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
 
 
 impl<Env> Statement<CompiledCtx<Env>> where Env: ExecutableDevEnv {
-    fn eval(&self) -> Result<(), Error> {
-        let _ignore = Env::API::put_service_value(&self.destination, self.value.clone());
-        // FIXME: Report error
-        Ok(())
+    fn eval(&self) ->  Vec<(ServiceId, Result<(), Error>)> {
+        Env::API::put_service_value(&self.destination, self.value.clone())
+            .into_iter()
+            .map(|(id, result)|
+                 (id, result.map_err(|err| Error::APIError(err))))
+            .collect()
     }
 }
 
@@ -294,5 +323,6 @@ pub enum RunningError {
 pub enum Error {
     CompileError(compile::Error),
     RunningError(RunningError),
+    APIError(api::Error),
 }
 

@@ -1,18 +1,26 @@
+#![feature(custom_derive, plugin)]
+#![plugin(serde_macros)]
+
 extern crate docopt;
-
-extern crate fxbox_thinkerbell;
-use fxbox_thinkerbell::run::Execution;
-use fxbox_thinkerbell::parse::Parser;
-use fxbox_thinkerbell::dependencies::{DevEnv, ExecutableDevEnv, Watcher};
-use fxbox_thinkerbell::values::Range;
-
-extern crate fxbox_taxonomy;
-use fxbox_taxonomy::values::Value;
-
+extern crate serde;
 extern crate serde_json;
-
 #[macro_use]
 extern crate lazy_static;
+
+extern crate fxbox_thinkerbell;
+extern crate fxbox_taxonomy;
+
+use fxbox_thinkerbell::compile::ExecutableDevEnv;
+use fxbox_thinkerbell::run::Execution;
+use fxbox_thinkerbell::parse::Parser;
+use fxbox_thinkerbell::values::Range;
+
+use fxbox_taxonomy::devices::*;
+use fxbox_taxonomy::requests::*;
+use fxbox_taxonomy::values::Value;
+use fxbox_taxonomy::api::{API, WatchEvent, WatchOptions};
+
+type APIError = fxbox_taxonomy::api::Error;
 
 use std::io::prelude::*;
 use std::fs::File;
@@ -31,7 +39,61 @@ Usage: simulator [options]...
 -o, --output <path>   Load definition of an output device.
 ";
 
+#[derive(Default, Serialize, Deserialize)]
+struct TestEnv;
+impl ExecutableDevEnv for TestEnv {
+    // Don't bother stopping watches.
+    type WatchGuard = ();
+    type API = APIImpl;
+}
 
+struct APIImpl;
+impl API for APIImpl {
+    type WatchGuard = ();
+
+    fn get_nodes(_: &Vec<NodeRequest>) -> Vec<Node> {
+        unimplemented!()
+    }
+
+    fn put_node_tag(_: &Vec<NodeRequest>, _: &Vec<String>) -> usize {
+        unimplemented!()
+    }
+
+    fn delete_node_tag(_: &Vec<NodeRequest>, _: String) -> usize {
+        unimplemented!()
+    }
+
+    fn get_input_services(_: &Vec<InputRequest>) -> Vec<Service<Input>> {
+        unimplemented!()
+    }
+    fn get_output_services(_: &Vec<OutputRequest>) -> Vec<Service<Output>> {
+        unimplemented!()
+    }
+    fn put_input_tag(_: &Vec<InputRequest>, _: &Vec<String>) -> usize {
+        unimplemented!()
+    }
+    fn put_output_tag(_: &Vec<OutputRequest>, _: &Vec<String>) -> usize {
+        unimplemented!()
+    }
+    fn delete_input_tag(_: &Vec<InputRequest>, _: &Vec<String>) -> usize {
+        unimplemented!()
+    }
+    fn delete_output_tag(_: &Vec<InputRequest>, _: &Vec<String>) -> usize {
+        unimplemented!()
+    }
+    fn get_service_value(_: &Vec<InputRequest>) -> Vec<(ServiceId, Result<Value, APIError>)> {
+        unimplemented!()
+    }
+    fn put_service_value(_: &Vec<OutputRequest>, _: Value) -> Vec<(ServiceId, Result<(), APIError>)> {
+        unimplemented!()
+    }
+    fn register_service_watch<F>(_: Vec<WatchOptions>, _: F) -> Self::WatchGuard
+        where F: FnMut(WatchEvent) + Send + 'static {
+        unimplemented!()
+    }
+
+}
+/*
 /// An implementation of DevEnv for the purpose of unit testing.
 struct State {
     states: HashMap</*device*/String, HashMap</*capability*/String, HashMap<String, Value>> >,
@@ -219,7 +281,7 @@ impl Drop for TestWatcher {
         self.tx.send(TestWatcherMsg::Stop).unwrap();
     }
 }
-
+*/
 fn main () {
     let args = docopt::Docopt::new(USAGE)
         .and_then(|d| d.argv(std::env::args().into_iter()).parse())
@@ -232,8 +294,7 @@ fn main () {
         let mut file = File::open(path).unwrap();
         let mut source = String::new();
         file.read_to_string(&mut source).unwrap();
-        let json : self::serde_json::Value = self::serde_json::from_str(&source).unwrap();
-        let script = Parser::parse(json).unwrap();
+        let script = Parser::parse(source).unwrap();
         print!("starting... ");
 
         let mut runner = Execution::<TestEnv>::new();
@@ -249,3 +310,4 @@ fn main () {
     loop {
     }
 }
+

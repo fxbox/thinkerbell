@@ -5,10 +5,12 @@ use compile::{Compiler, CompiledCtx, ExecutableDevEnv};
 use compile;
 use values::Range;
 
+use fxbox_taxonomy;
 use fxbox_taxonomy::api;
 use fxbox_taxonomy::api::{API, WatchEvent};
 use fxbox_taxonomy::devices::ServiceId;
 
+use std::sync::Arc;
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::marker::PhantomData;
 use std::result::Result;
@@ -35,7 +37,7 @@ impl<Env> Execution<Env> where Env: ExecutableDevEnv + 'static {
     /// # Errors
     ///
     /// Produces RunningError:AlreadyRunning if the script is already running.
-    pub fn start<F>(&mut self, script: Script<UncheckedCtx>, on_event: F) where F: Fn(ExecutionEvent) + Send + 'static {
+    pub fn start<F>(&mut self, env: Arc<Env>, script: Script<UncheckedCtx>, on_event: F) where F: Fn(ExecutionEvent) + Send + 'static {
         if self.command_sender.is_some() {
             on_event(ExecutionEvent::Starting {
                 result: Err(Error::RunningError(RunningError::AlreadyRunning))
@@ -56,7 +58,7 @@ impl<Env> Execution<Env> where Env: ExecutableDevEnv + 'static {
                     on_event(ExecutionEvent::Starting {
                         result: Ok(())
                     });
-                    task.run(on_event);
+                    task.run(env, on_event);
                 }
             }
         });
@@ -92,8 +94,7 @@ impl<Env> Drop for Execution<Env> where Env: ExecutableDevEnv + 'static {
 /// A script ready to be executed. Each script is meant to be
 /// executed in an individual thread.
 pub struct ExecutionTask<Env> where Env: ExecutableDevEnv {
-    /// The script, annotated with its state.
-    state: Script<CompiledCtx<Env>>,
+    script: Script<CompiledCtx<Env>>,
 
     /// Communicating with the thread running script.
     tx: Sender<ExecutionOp>,
@@ -134,10 +135,10 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
     /// calling `run()`.
     fn new(script: Script<UncheckedCtx>, tx: Sender<ExecutionOp>, rx: Receiver<ExecutionOp>) -> Result<Self, Error> {
         let compiler = try!(Compiler::new().map_err(|err| Error::CompileError(err)));
-        let state = try!(compiler.compile(script).map_err(|err| Error::CompileError(err)));
+        let script = try!(compiler.compile(script).map_err(|err| Error::CompileError(err)));
         
         Ok(ExecutionTask {
-            state: state,
+            script: script,
             rx: rx,
             tx: tx
         })
@@ -145,8 +146,8 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
 
     /// Execute the monitoring task.
     /// This currently expects to be executed in its own thread.
-    fn run<F>(&mut self, on_event: F) where F: Fn(ExecutionEvent) {
-
+    fn run<F>(&mut self, env: Arc<Env>, on_event: F) where F: Fn(ExecutionEvent) {
+        let api = env.api();
         let mut witnesses = Vec::new();
 
         struct ConditionState {
@@ -162,10 +163,10 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
         // Generate the state of rules, conditions, inputs and start
         // listening to changes in the inputs.
 
-        let mut per_rule : Vec<_> = self.state.rules.iter().zip(0 as usize..).map(|(rule, rule_index)| {
+        let mut per_rule : Vec<_> = self.script.rules.iter().zip(0 as usize..).map(|(rule, rule_index)| {
             let per_condition = rule.conditions.iter().zip(0 as usize..).map(|(condition, condition_index)| {
                 let options: Vec<_> = condition.source.iter().map(|input| {
-                    api::WatchOptions::new()
+                    fxbox_taxonomy::api::WatchOptions::new()
                         .with_inputs(input.clone())
                 }).collect();
                 // We will often end up watching several times the
@@ -177,9 +178,9 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
 
                 let tx2 = self.tx.clone();
                 witnesses.push(
-                    Env::API::register_service_watch(
+                    api.register_service_watch(
                         options,
-                        move |event| {
+                        Box::new(move |event| {
                             let _ignored = tx2.send(ExecutionOp::Update {
                                 event: event,
                                 rule_index: rule_index,
@@ -189,7 +190,7 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
                             // mean that the thread is already down,
                             // in which case we don't care about
                             // messages.
-                        }));
+                        })));
                 let range = condition.range.clone();
                 ConditionState {
                     match_is_met: false,
@@ -284,8 +285,8 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
 
                         if !condition_was_met && condition_is_met {
                             // Ahah, we have just triggered the statements!
-                            for (statement, statement_index) in self.state.rules[rule_index].execute.iter().zip(0..) {
-                                let result = statement.eval();
+                            for (statement, statement_index) in self.script.rules[rule_index].execute.iter().zip(0..) {
+                                let result = statement.eval(env.clone());
                                 on_event(ExecutionEvent::Sent {
                                     rule_index: rule_index,
                                     statement_index: statement_index,
@@ -302,8 +303,9 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
 
 
 impl<Env> Statement<CompiledCtx<Env>> where Env: ExecutableDevEnv {
-    fn eval(&self) ->  Vec<(ServiceId, Result<(), Error>)> {
-        Env::API::put_service_value(&self.destination, self.value.clone())
+    fn eval(&self, env: Arc<Env>) ->  Vec<(ServiceId, Result<(), Error>)> {
+        env.api()
+            .put_service_value(&self.destination, self.value.clone())
             .into_iter()
             .map(|(id, result)|
                  (id, result.map_err(|err| Error::APIError(err))))

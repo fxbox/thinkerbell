@@ -14,6 +14,7 @@
 //!   met last time they were evaluated.
 
 use std::marker::PhantomData;
+use std::sync::Arc;
 
 use ast::{Script, Rule, Statement, Match, Context, UncheckedCtx};
 use util::*;
@@ -30,6 +31,7 @@ use serde::de::{Deserialize, Deserializer};
 pub trait ExecutableDevEnv: Serialize + Deserialize + Default + Send + Sync {
     type WatchGuard;
     type API: API<WatchGuard = Self::WatchGuard>;
+    fn api(&self) -> Arc<Self::API>;
 }
 
 

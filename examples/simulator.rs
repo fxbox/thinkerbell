@@ -75,25 +75,33 @@ lazy_static! {
     };
 }
 
+enum Update {
+    Put { id: ServiceId, value: Value, result: Result<(), String> },
+    Done(String),
+}
+
 struct APIImpl {
     nodes: HashMap<NodeId, Node>,
     inputs: HashMap<ServiceId, (Service<Input>, Option<Value>)>,
     outputs: HashMap<ServiceId, Service<Output>>,
     watchers: Vec<(WatchOptions, Arc<Box<FnMut(WatchEvent)>>)>,
+    post_updates: Box<Fn(Update)>
 }
 impl APIImpl {
-    fn new() -> Self {
+    fn new<F>(cb: F) -> Self
+        where F: Fn(Update) + 'static {
         APIImpl {
             nodes: HashMap::new(),
             inputs: HashMap::new(),
             outputs: HashMap::new(),
-            watchers: Vec::new()
+            watchers: Vec::new(),
+            post_updates: Box::new(cb)
         }
     }
     
     fn add_nodes(&mut self, nodes: Vec<Node>) -> Result<(), ()> {
         for node in nodes {
-            let previous = self.nodes.insert(node.get_id().clone(), node);
+            let previous = self.nodes.insert(node.id.clone(), node);
             if previous.is_none() {
                 return Err(());
             }
@@ -103,7 +111,7 @@ impl APIImpl {
     }
     fn add_inputs(&mut self, inputs: Vec<Service<Input>>) -> Result<(), ()> {
         for input in inputs {
-            let previous = self.inputs.insert(input.get_id().clone(), (input, None));
+            let previous = self.inputs.insert(input.id.clone(), (input, None));
             if previous.is_none() {
                 return Err(());
             }
@@ -113,7 +121,7 @@ impl APIImpl {
     }
     fn add_outputs(&mut self, outputs: Vec<Service<Output>>) -> Result<(), ()> {
         for output in outputs {
-            let previous = self.outputs.insert(output.get_id().clone(), output);
+            let previous = self.outputs.insert(output.id.clone(), output);
             if previous.is_none() {
                 return Err(());
             }
@@ -128,6 +136,61 @@ impl APIImpl {
             self.watchers.push((opt, cb.clone()));
         }
         Ok(())
+    }
+
+    fn put_value(&mut self, filters: Vec<OutputRequest>, value: Value) {
+        // Very suboptimal implementation.
+        let outputs = self.outputs.values().filter(|output| {
+            for request in &filters {
+                if !request.id.matches(&output.id) {
+                    return false;
+                }
+                if !request.parent.matches(&output.node) {
+                    return false;
+                }
+                if !request.kind.matches(&output.mechanism.kind) {
+                    return false;
+                }
+                if let Some(Period {ref min, ref max}) = request.push {
+                    if let Some(ref current) = output.mechanism.push {
+                        if let Some(ref min) = *min {
+                            if min > current {
+                                return false;
+                            }
+                        }
+                        if let Some(ref max) = *max {
+                            if max < current {
+                                return false;
+                            }
+                        }
+                    } else {
+                        return false;
+                    }
+                }
+                for tag in &request.tags {
+                    if output.tags.iter().find(|x| *x == tag).is_none() {
+                        return false;
+                    }
+                }
+                return true;
+            }
+            // No filters? Then nothing matches.
+            return false;
+        });
+        for output in outputs {
+            let result =
+                if value.get_type() == output.mechanism.kind.get_type() {
+                    Ok(())
+                } else {
+                    Err(format!("Invalid type, expected {:?}, got {:?}", value.get_type(), output.mechanism.kind.get_type()))
+                };
+            (*self.post_updates)(Update::Put {
+                id: output.id.clone(),
+                value: value.clone(),
+                result: result
+            });
+        }
+        (*self.post_updates)(Update::Done("put".to_owned()));
     }
 }
 

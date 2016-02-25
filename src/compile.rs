@@ -14,7 +14,6 @@
 //!   met last time they were evaluated.
 
 use std::marker::PhantomData;
-use std::sync::Arc;
 
 use ast::{Script, Rule, Statement, Match, Context, UncheckedCtx};
 use util::*;
@@ -28,10 +27,10 @@ use serde::de::{Deserialize, Deserializer};
 /// The environment in which the code is meant to be executed.  This
 /// can typically be instantiated either with actual bindings to
 /// devices, or with a unit-testing framework. // FIXME: Move this to run.rs
-pub trait ExecutableDevEnv: Serialize + Deserialize + Default + Send + Sync {
+pub trait ExecutableDevEnv: Serialize + Deserialize + Default + Send {
     type WatchGuard;
     type API: API<WatchGuard = Self::WatchGuard>;
-    fn api(&self) -> Arc<Self::API>;
+    fn api(&self) -> Self::API;
 }
 
 

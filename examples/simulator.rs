@@ -32,6 +32,8 @@ use std::thread;
 use std::time::Duration;
 use std::sync::Arc;
 
+use serde::ser::{Serialize, Serializer};
+use serde::de::{Deserialize, Deserializer};
 const USAGE: &'static str = "
 Usage: simulator [options]...
        simulator --help
@@ -43,14 +45,23 @@ Usage: simulator [options]...
 
 #[derive(Default, Serialize, Deserialize)]
 struct TestEnv {
-    front: Arc<APIFrontEnd>,
+    front: APIFrontEnd,
 }
 impl ExecutableDevEnv for TestEnv {
     // Don't bother stopping watches.
     type WatchGuard = ();
     type API = APIFrontEnd;
-    fn api(&self) {
-        self.api.clone()
+
+    fn api(&self) -> Self::API {
+        self.front.clone()
+    }
+}
+impl TestEnv {
+    fn new<F>(cb: F) -> Self
+        where F: Fn(Update) + Send + 'static {
+        TestEnv {
+            front: APIFrontEnd::new(cb)
+        }
     }
 }
 
@@ -75,7 +86,7 @@ struct APIBackEnd {
 }
 impl APIBackEnd {
     fn new<F>(cb: F) -> Self
-        where F: Fn(Update) + 'static {
+        where F: Fn(Update) + Send + 'static {
         APIBackEnd {
             nodes: HashMap::new(),
             inputs: HashMap::new(),
@@ -180,14 +191,33 @@ impl APIBackEnd {
     }
 }
 
+#[derive(Clone)]
 struct APIFrontEnd {
+    // By definition, the cell is never empty
     tx: Sender<Op>
 }
+impl Serialize for APIFrontEnd {
+    fn serialize<S>(&self, _: &mut S) -> Result<(), S::Error> where S: Serializer {
+        panic!("WTF are we doing serializing the front-end?");
+    }
+}
+impl Deserialize for APIFrontEnd {
+    fn deserialize<D>(_: &mut D) -> Result<Self, D::Error> where D: Deserializer {
+        panic!("WTF are we doing deserializing the front-end?");
+    }
+}
+impl Default for APIFrontEnd {
+    fn default() -> Self {
+        panic!("WTF are we doing calling default() for the front-end?");
+    }
+}
+
 impl APIFrontEnd {
-    fn new() -> Self {
+    fn new<F>(cb: F) -> Self
+        where F: Fn(Update) + Send + 'static {
         let (tx, rx) = channel();
         thread::spawn(move || {
-            let mut api = APIBackEnd::new();
+            let mut api = APIBackEnd::new(cb);
             for msg in rx.iter() {
                 use Op::*;
                 match msg {
@@ -246,7 +276,7 @@ impl API for APIFrontEnd {
     fn register_service_watch(&self, options: Vec<WatchOptions>, cb: Box<FnMut(WatchEvent) + Send + 'static>) -> Self::WatchGuard {
         self.tx.send(Op::AddWatch {
             options: options,
-            cb: Box::new(cb)
+            cb: cb
         }).unwrap();
         ()
     }
@@ -443,6 +473,8 @@ impl Drop for TestWatcher {
 }
 */
 fn main () {
+    let env = TestEnv::new(|_|{});
+
     use fxbox_thinkerbell::run:: ExecutionEvent::*;
     let args = docopt::Docopt::new(USAGE)
         .and_then(|d| d.argv(std::env::args().into_iter()).parse())
@@ -462,7 +494,7 @@ fn main () {
 
         let mut runner = Execution::<TestEnv>::new();
         let (tx, rx) = channel();
-        runner.start(script, move |res| {tx.send(res).unwrap();});
+        runner.start(env.api(), script, move |res| {tx.send(res).unwrap();});
         match rx.recv().unwrap() {
             Starting { result: Ok(()) } => println!("ready."),
             err => panic!("Could not launch script {:?}", err)

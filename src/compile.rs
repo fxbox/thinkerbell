@@ -18,7 +18,6 @@ use std::marker::PhantomData;
 use ast::{Script, Rule, Statement, Match, Context, UncheckedCtx};
 use util::*;
 
-use fxbox_taxonomy::requests::*;
 use fxbox_taxonomy::api::API;
 
 use serde::ser::{Serialize, Serializer};
@@ -43,39 +42,6 @@ pub struct CompiledCtx<Env> where Env: Serialize + Deserialize {
     phantom: Phantom<Env>,
 }
 
-/*
-pub struct CompiledInput<Env> where Env: DevEnv {
-    pub device: Env::Device,
-    pub state: RwLock<Option<DatedData>>,
-}
-
-pub struct CompiledOutput<Env> where Env: DevEnv {
-    pub device: Env::Device,
-}
-
-pub type CompiledInputSet<Env> = Vec<Arc<CompiledInput<Env>>>;
-pub type CompiledOutputSet<Env> = Vec<Arc<CompiledOutput<Env>>>;
-*/
-
-#[derive(Serialize, Deserialize)]
-pub struct RuleState { // FIXME: We might be able to do without.
-    /// `true` if the condition was met last time we evaluated it,
-    /// `false` otherwise.
-    pub is_met: bool
-}
-impl RuleState {
-    fn new() -> Self {
-        RuleState {
-            is_met: true
-        }
-    }
-}
-impl Default for RuleState {
-    fn default() -> Self {
-        Self::new()
-    }
-}
-
 /// We implement `Default` to keep derive happy, but this code should
 /// be unreachable.
 impl<Env> Default for CompiledCtx<Env> where Env: Serialize + Deserialize {
@@ -85,9 +51,6 @@ impl<Env> Default for CompiledCtx<Env> where Env: Serialize + Deserialize {
 }
 
 impl<Env> Context for CompiledCtx<Env> where Env: Serialize + Deserialize {
-    type RuleState = RuleState;
-    type Inputs = InputRequest;
-    type Outputs = OutputRequest;
 }
 
 #[derive(Debug)]
@@ -165,7 +128,6 @@ impl<Env> Compiler<Env> where Env: ExecutableDevEnv {
         Ok(Rule {
             conditions: conditions,
             execute: execute,
-            state: RuleState::new(),
             phantom: Phantom::new()
         })
     }

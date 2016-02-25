@@ -28,10 +28,9 @@ impl<T> Phantom<T> {
 }
 
 impl<T> Serialize for Phantom<T> {
-    fn serialize<S>(&self, _: &mut S) -> Result<(), S::Error>
+    fn serialize<S>(&self, serializer: &mut S) -> Result<(), S::Error>
         where S: Serializer {
-        // Nothing to write.
-        Ok(())
+        serializer.visit_unit()
     }
 }
 impl<T> Deserialize for Phantom<T> {

@@ -52,9 +52,6 @@ pub struct Rule<Ctx> where Ctx: Context {
     pub execute: Vec<Statement<Ctx>>,
 
     #[serde(default)]
-    pub state: Ctx::RuleState,
-
-    #[serde(default)]
     #[allow(dead_code)]
     pub phantom: Phantom<Ctx>,
 }
@@ -106,10 +103,6 @@ pub struct Statement<Ctx> where Ctx: Context {
 
 /// A manner of representing internal nodes.
 pub trait Context: Serialize + Deserialize + Default {
-    /// A representation of the current state of a condition.
-    type RuleState: Serialize + Deserialize + Default;
-    type Inputs: Serialize + Deserialize + Default;
-    type Outputs: Serialize + Deserialize + Default;
 }
 
 /// A Context used to represent a script that hasn't been compiled
@@ -117,8 +110,4 @@ pub trait Context: Serialize + Deserialize + Default {
 #[derive(Default, Serialize, Deserialize)]
 pub struct UncheckedCtx;
 impl Context for UncheckedCtx {
-    /// In this implementation, triggers have no state.
-    type RuleState = ();
-    type Inputs = InputRequest;
-    type Outputs = OutputRequest;
 }

@@ -11,13 +11,14 @@ extern crate fxbox_thinkerbell;
 extern crate fxbox_taxonomy;
 
 use fxbox_thinkerbell::compile::ExecutableDevEnv;
-use fxbox_thinkerbell::run::Execution;
+use fxbox_thinkerbell::run::{Execution, ExecutionEvent};
 use fxbox_thinkerbell::parse::Parser;
 use fxbox_thinkerbell::values::Range;
+use fxbox_thinkerbell::util::Phantom;
 
 use fxbox_taxonomy::devices::*;
 use fxbox_taxonomy::requests::*;
-use fxbox_taxonomy::values::Value;
+use fxbox_taxonomy::values::*;
 use fxbox_taxonomy::api::{API, WatchEvent, WatchOptions};
 
 type APIError = fxbox_taxonomy::api::Error;
@@ -93,6 +94,7 @@ impl API for APIImpl {
     }
 
 }
+
 /*
 /// An implementation of DevEnv for the purpose of unit testing.
 struct State {
@@ -283,31 +285,33 @@ impl Drop for TestWatcher {
 }
 */
 fn main () {
+    use fxbox_thinkerbell::run:: ExecutionEvent::*;
     let args = docopt::Docopt::new(USAGE)
         .and_then(|d| d.argv(std::env::args().into_iter()).parse())
         .unwrap_or_else(|e| e.exit());
 
     let mut runners = Vec::new();
-    
+
+    println!("Preparing simulator");
+
     for path in args.get_vec("--ruleset") {
         print!("Loading ruleset from {}... ", path);
         let mut file = File::open(path).unwrap();
         let mut source = String::new();
         file.read_to_string(&mut source).unwrap();
         let script = Parser::parse(source).unwrap();
-        print!("starting... ");
+        print!("launching... ");
 
         let mut runner = Execution::<TestEnv>::new();
         let (tx, rx) = channel();
         runner.start(script, move |res| {tx.send(res).unwrap();});
-        rx.recv().unwrap().unwrap();
-
+        match rx.recv().unwrap() {
+            Starting { result: Ok(()) } => println!("ready."),
+            err => panic!("Could not launch script {:?}", err)
+        }
         runners.push(runner);
-        println!("ready.");
     }
 
-    // FIXME: This should become a REPL.
-    loop {
-    }
+    thread::sleep(std::time::Duration::new(100, 0));
 }
 

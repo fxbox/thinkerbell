@@ -100,6 +100,7 @@ pub struct ExecutionTask<Env> where Env: ExecutableDevEnv {
     rx: Receiver<ExecutionOp>,
 }
 
+#[derive(Debug)]
 pub enum ExecutionEvent {
     Starting {
         result: Result<(), Error>,
@@ -118,7 +119,6 @@ pub enum ExecutionEvent {
         result: Vec<(ServiceId, Result<(), Error>)>
     }
 }
-
 
 enum ExecutionOp {
     Update { event: WatchEvent, rule_index: usize, condition_index: usize },

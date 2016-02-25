@@ -1,48 +1,60 @@
 {
-  "requirements": [
-    {
-      "kind": "clock",
-      "inputs": [
-        "ticks"
-      ]
-    },
-    {
-      "kind": "display device",
-      "outputs": [
-        "show"
-      ]
-    }
-  ],
-  "allocations": [
-    [
-      "built-in clock"
-    ],
-    [
-      "built-in display 1",
-      "built-in display 2"
-    ]
-  ],
   "rules": [
     {
-      "condition": [
+      "conditions": [
         {
-          "input": 0,
-          "capability": "ticks",
-          "range": [
+          "source": [
             {
-              "type": "Duration",
-              "s": 5
-            },
-            null
-          ]
+              "id": {
+                "Empty": []
+              },
+              "parent": {
+                "Empty": []
+              },
+              "tags": [],
+              "kind": {
+                "Exactly": {
+                  "CurrentTimeOfDay": []
+                }
+              },
+              "poll": null,
+              "trigger": null
+            }
+          ],
+          "kind": {
+            "CurrentTimeOfDay": []
+          },
+          "range": {
+            "Geq": {
+              "Duration": 5000
+            }
+          }
         }
       ],
-      "action": [
+      "execute": [
         {
-          "output": 1,
-          "capability": "show",
-          "args": {
-            "reached": true
+          "destination": [
+            {
+              "id": {
+                "Empty": []
+              },
+              "parent": {
+                "Empty": []
+              },
+              "tags": [],
+              "kind": {
+                "Exactly": {
+                  "Ready": []
+                }
+              },
+              "push": null
+            }
+          ],
+          "value": {
+            "Unit": []
+          },
+          "kind": {
+            "Ready": []
           }
         }
       ]

@@ -30,6 +30,7 @@ use std::collections::HashMap;
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::time::Duration;
+use std::sync::Arc;
 
 const USAGE: &'static str = "
 Usage: simulator [options]...
@@ -48,7 +49,88 @@ impl ExecutableDevEnv for TestEnv {
     type API = APIImpl;
 }
 
-struct APIImpl;
+enum Op {
+    AddNodes(Vec<Node>),
+    AddInputs(Vec<Service<Input>>),
+    AddOutputs(Vec<Service<Output>>),
+    AddWatch{options: Vec<WatchOptions>, cb: Box<FnMut(WatchEvent) + Send + 'static>},
+}
+
+lazy_static! {
+    static ref SEND: Mutex<Sender<Op>> = { // FIXME: Find a way to get rid of that Mutex.
+        let (tx, rx) = channel();
+        thread::spawn(move || {
+            let mut api = APIImpl::new();
+            for msg in rx.iter() {
+                use Op::*;
+                match msg {
+                    AddNodes(vec) => api.add_nodes(vec).unwrap(),
+                    AddInputs(vec) => api.add_inputs(vec).unwrap(),
+                    AddOutputs(vec) => api.add_outputs(vec).unwrap(),
+                    AddWatch{options, cb} => api.add_watch(options, cb).unwrap()
+                }
+            }
+        });
+        Mutex::new(tx)
+    };
+}
+
+struct APIImpl {
+    nodes: HashMap<NodeId, Node>,
+    inputs: HashMap<ServiceId, (Service<Input>, Option<Value>)>,
+    outputs: HashMap<ServiceId, Service<Output>>,
+    watchers: Vec<(WatchOptions, Arc<Box<FnMut(WatchEvent)>>)>,
+}
+impl APIImpl {
+    fn new() -> Self {
+        APIImpl {
+            nodes: HashMap::new(),
+            inputs: HashMap::new(),
+            outputs: HashMap::new(),
+            watchers: Vec::new()
+        }
+    }
+    
+    fn add_nodes(&mut self, nodes: Vec<Node>) -> Result<(), ()> {
+        for node in nodes {
+            let previous = self.nodes.insert(node.get_id().clone(), node);
+            if previous.is_none() {
+                return Err(());
+            }
+        }
+        Ok(())
+        // FIXME: In a real implementation, this should update all NodeRequest
+    }
+    fn add_inputs(&mut self, inputs: Vec<Service<Input>>) -> Result<(), ()> {
+        for input in inputs {
+            let previous = self.inputs.insert(input.get_id().clone(), (input, None));
+            if previous.is_none() {
+                return Err(());
+            }
+        }
+        Ok(())
+        // FIXME: In a real implementation, this should update all InputRequests
+    }
+    fn add_outputs(&mut self, outputs: Vec<Service<Output>>) -> Result<(), ()> {
+        for output in outputs {
+            let previous = self.outputs.insert(output.get_id().clone(), output);
+            if previous.is_none() {
+                return Err(());
+            }
+        }
+        Ok(())
+        // FIXME: In a real implementation, this should update all OutputRequests
+    }
+
+    fn add_watch(&mut self, options: Vec<WatchOptions>, cb: Box<FnMut(WatchEvent)>) -> Result<(), ()> {
+        let cb = Arc::new(cb);
+        for opt in options {
+            self.watchers.push((opt, cb.clone()));
+        }
+        Ok(())
+    }
+}
+
 impl API for APIImpl {
     type WatchGuard = ();
 
@@ -88,9 +170,13 @@ impl API for APIImpl {
     fn put_service_value(_: &Vec<OutputRequest>, _: Value) -> Vec<(ServiceId, Result<(), APIError>)> {
         unimplemented!()
     }
-    fn register_service_watch<F>(_: Vec<WatchOptions>, _: F) -> Self::WatchGuard
+    fn register_service_watch<F>(options: Vec<WatchOptions>, cb: F) -> Self::WatchGuard
         where F: FnMut(WatchEvent) + Send + 'static {
-        unimplemented!()
+        SEND.lock().unwrap().send(Op::AddWatch {
+            options: options,
+            cb: Box::new(cb)
+        }).unwrap();
+        ()
     }
 
 }

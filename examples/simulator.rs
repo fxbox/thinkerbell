@@ -42,11 +42,16 @@ Usage: simulator [options]...
 ";
 
 #[derive(Default, Serialize, Deserialize)]
-struct TestEnv;
+struct TestEnv {
+    front: Arc<APIFrontEnd>,
+}
 impl ExecutableDevEnv for TestEnv {
     // Don't bother stopping watches.
     type WatchGuard = ();
-    type API = APIImpl;
+    type API = APIFrontEnd;
+    fn api(&self) {
+        self.api.clone()
+    }
 }
 
 enum Op {
@@ -56,46 +61,27 @@ enum Op {
     AddWatch{options: Vec<WatchOptions>, cb: Box<FnMut(WatchEvent) + Send + 'static>},
 }
 
-lazy_static! {
-    static ref SEND: Mutex<Sender<Op>> = { // FIXME: Find a way to get rid of that Mutex.
-        let (tx, rx) = channel();
-        thread::spawn(move || {
-            let mut api = APIImpl::new();
-            for msg in rx.iter() {
-                use Op::*;
-                match msg {
-                    AddNodes(vec) => api.add_nodes(vec).unwrap(),
-                    AddInputs(vec) => api.add_inputs(vec).unwrap(),
-                    AddOutputs(vec) => api.add_outputs(vec).unwrap(),
-                    AddWatch{options, cb} => api.add_watch(options, cb).unwrap()
-                }
-            }
-        });
-        Mutex::new(tx)
-    };
-}
-
 enum Update {
     Put { id: ServiceId, value: Value, result: Result<(), String> },
     Done(String),
 }
 
-struct APIImpl {
+struct APIBackEnd {
     nodes: HashMap<NodeId, Node>,
     inputs: HashMap<ServiceId, (Service<Input>, Option<Value>)>,
     outputs: HashMap<ServiceId, Service<Output>>,
     watchers: Vec<(WatchOptions, Arc<Box<FnMut(WatchEvent)>>)>,
-    post_updates: Box<Fn(Update)>
+    post_updates: Arc<Fn(Update)>
 }
-impl APIImpl {
+impl APIBackEnd {
     fn new<F>(cb: F) -> Self
         where F: Fn(Update) + 'static {
-        APIImpl {
+        APIBackEnd {
             nodes: HashMap::new(),
             inputs: HashMap::new(),
             outputs: HashMap::new(),
             watchers: Vec::new(),
-            post_updates: Box::new(cb)
+            post_updates: Arc::new(cb)
         }
     }
     
@@ -194,48 +180,71 @@ impl APIImpl {
     }
 }
 
-impl API for APIImpl {
+struct APIFrontEnd {
+    tx: Sender<Op>
+}
+impl APIFrontEnd {
+    fn new() -> Self {
+        let (tx, rx) = channel();
+        thread::spawn(move || {
+            let mut api = APIBackEnd::new();
+            for msg in rx.iter() {
+                use Op::*;
+                match msg {
+                    AddNodes(vec) => api.add_nodes(vec).unwrap(),
+                    AddInputs(vec) => api.add_inputs(vec).unwrap(),
+                    AddOutputs(vec) => api.add_outputs(vec).unwrap(),
+                    AddWatch{options, cb} => api.add_watch(options, cb).unwrap()
+                }
+            }
+        });
+        APIFrontEnd {
+            tx: tx
+        }
+    }
+}
+
+impl API for APIFrontEnd {
     type WatchGuard = ();
 
-    fn get_nodes(_: &Vec<NodeRequest>) -> Vec<Node> {
+    fn get_nodes(&self, _: &Vec<NodeRequest>) -> Vec<Node> {
         unimplemented!()
     }
 
-    fn put_node_tag(_: &Vec<NodeRequest>, _: &Vec<String>) -> usize {
+    fn put_node_tag(&self, _: &Vec<NodeRequest>, _: &Vec<String>) -> usize {
         unimplemented!()
     }
 
-    fn delete_node_tag(_: &Vec<NodeRequest>, _: String) -> usize {
+    fn delete_node_tag(&self, _: &Vec<NodeRequest>, _: String) -> usize {
         unimplemented!()
     }
 
-    fn get_input_services(_: &Vec<InputRequest>) -> Vec<Service<Input>> {
+    fn get_input_services(&self, _: &Vec<InputRequest>) -> Vec<Service<Input>> {
         unimplemented!()
     }
-    fn get_output_services(_: &Vec<OutputRequest>) -> Vec<Service<Output>> {
+    fn get_output_services(&self, _: &Vec<OutputRequest>) -> Vec<Service<Output>> {
         unimplemented!()
     }
-    fn put_input_tag(_: &Vec<InputRequest>, _: &Vec<String>) -> usize {
+    fn put_input_tag(&self, _: &Vec<InputRequest>, _: &Vec<String>) -> usize {
         unimplemented!()
     }
-    fn put_output_tag(_: &Vec<OutputRequest>, _: &Vec<String>) -> usize {
+    fn put_output_tag(&self, _: &Vec<OutputRequest>, _: &Vec<String>) -> usize {
         unimplemented!()
     }
-    fn delete_input_tag(_: &Vec<InputRequest>, _: &Vec<String>) -> usize {
+    fn delete_input_tag(&self, _: &Vec<InputRequest>, _: &Vec<String>) -> usize {
         unimplemented!()
     }
-    fn delete_output_tag(_: &Vec<InputRequest>, _: &Vec<String>) -> usize {
+    fn delete_output_tag(&self, _: &Vec<InputRequest>, _: &Vec<String>) -> usize {
         unimplemented!()
     }
-    fn get_service_value(_: &Vec<InputRequest>) -> Vec<(ServiceId, Result<Value, APIError>)> {
+    fn get_service_value(&self, _: &Vec<InputRequest>) -> Vec<(ServiceId, Result<Value, APIError>)> {
         unimplemented!()
     }
-    fn put_service_value(_: &Vec<OutputRequest>, _: Value) -> Vec<(ServiceId, Result<(), APIError>)> {
+    fn put_service_value(&self, _: &Vec<OutputRequest>, _: Value) -> Vec<(ServiceId, Result<(), APIError>)> {
         unimplemented!()
     }
-    fn register_service_watch<F>(options: Vec<WatchOptions>, cb: F) -> Self::WatchGuard
-        where F: FnMut(WatchEvent) + Send + 'static {
-        SEND.lock().unwrap().send(Op::AddWatch {
+    fn register_service_watch(&self, options: Vec<WatchOptions>, cb: Box<FnMut(WatchEvent) + Send + 'static>) -> Self::WatchGuard {
+        self.tx.send(Op::AddWatch {
             options: options,
             cb: Box::new(cb)
         }).unwrap();

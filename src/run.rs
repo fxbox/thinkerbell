@@ -37,7 +37,7 @@ impl<Env> Execution<Env> where Env: ExecutableDevEnv + 'static {
     /// # Errors
     ///
     /// Produces RunningError:AlreadyRunning if the script is already running.
-    pub fn start<F>(&mut self, env: Arc<Env>, script: Script<UncheckedCtx>, on_event: F) where F: Fn(ExecutionEvent) + Send + 'static {
+    pub fn start<F>(&mut self, api: Arc<API>, script: Script<UncheckedCtx>, on_event: F) where F: Fn(ExecutionEvent) + Send + 'static {
         if self.command_sender.is_some() {
             on_event(ExecutionEvent::Starting {
                 result: Err(Error::RunningError(RunningError::AlreadyRunning))
@@ -58,7 +58,7 @@ impl<Env> Execution<Env> where Env: ExecutableDevEnv + 'static {
                     on_event(ExecutionEvent::Starting {
                         result: Ok(())
                     });
-                    task.run(env, on_event);
+                    task.run(api, on_event);
                 }
             }
         });
@@ -146,8 +146,7 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
 
     /// Execute the monitoring task.
     /// This currently expects to be executed in its own thread.
-    fn run<F>(&mut self, env: Arc<Env>, on_event: F) where F: Fn(ExecutionEvent) {
-        let api = env.api();
+    fn run<F>(&mut self, api: Arc<API>, on_event: F) where F: Fn(ExecutionEvent) {
         let mut witnesses = Vec::new();
 
         struct ConditionState {
@@ -286,7 +285,7 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
                         if !condition_was_met && condition_is_met {
                             // Ahah, we have just triggered the statements!
                             for (statement, statement_index) in self.script.rules[rule_index].execute.iter().zip(0..) {
-                                let result = statement.eval(env.clone());
+                                let result = statement.eval(api);
                                 on_event(ExecutionEvent::Sent {
                                     rule_index: rule_index,
                                     statement_index: statement_index,
@@ -303,9 +302,9 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
 
 
 impl<Env> Statement<CompiledCtx<Env>> where Env: ExecutableDevEnv {
-    fn eval(&self, env: Arc<Env>) ->  Vec<(ServiceId, Result<(), Error>)> {
-        env.api()
-            .put_service_value(&self.destination, self.value.clone())
+    fn eval(&self, api: &Arc<API>) ->  Vec<(ServiceId, Result<(), Error>)> {
+        api.
+            put_service_value(&self.destination, self.value.clone())
             .into_iter()
             .map(|(id, result)|
                  (id, result.map_err(|err| Error::APIError(err))))

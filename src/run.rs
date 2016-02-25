@@ -1,27 +1,20 @@
 //! Launching and running the script
 
-use ast::{Script, Rule, Statement, Match, UncheckedCtx};
+use ast::{Script, Statement, UncheckedCtx};
 use compile::{Compiler, CompiledCtx, ExecutableDevEnv};
 use compile;
+use values::Range;
 
-use fxbox_taxonomy::values::*;
 use fxbox_taxonomy::api;
 use fxbox_taxonomy::api::{API, WatchEvent};
+use fxbox_taxonomy::devices::ServiceId;
 
 use std::sync::mpsc::{channel, Receiver, Sender};
 use std::marker::PhantomData;
 use std::result::Result;
 use std::result::Result::*;
 use std::thread;
-use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
-
-use chrono::UTC;
-
-fn test<F>(cb: F) where F: FnMut(WatchEvent) + Send + Sync {
-    unimplemented!()
-}
-
 
 /// Running and controlling a single script.
 pub struct Execution<Env> where Env: ExecutableDevEnv + 'static {
@@ -106,10 +99,7 @@ pub struct ExecutionTask<Env> where Env: ExecutableDevEnv {
 
 
 enum ExecutionOp {
-    /// An input has been updated, time to check if we have triggers
-    /// ready to be executed.
-    Update {index: usize, value: Value},
-
+    Update { event: WatchEvent, rule_index: usize, condition_index: usize },
     /// Time to stop executing the script.
     Stop(Box<Fn(Result<(), Error>) + Send>)
 }
@@ -134,32 +124,24 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
     /// Execute the monitoring task.
     /// This currently expects to be executed in its own thread.
     fn run(&mut self) {
+
         let mut witnesses = Vec::new();
 
-        // Start listening to all inputs that appear in conditions.
-        for rule in &self.state.rules  {
+        struct ConditionState {
+            match_is_met: bool,
+            per_input: HashMap<ServiceId, bool>,
+            range: Range,
+        };
+        struct RuleState {
+            rule_is_met: bool,
+            per_condition: Vec<ConditionState>,
+        };
 
-            let mut rule_is_met = false; // FIXME: Why does this build? Shouldn't I protect `rule_is_met` by my mutex?
+        // Generate the state of rules, conditions, inputs and start
+        // listening to changes in the inputs.
 
-            // A Arc<Mutex<_>> is required here as we spawn several
-            // Send + Sync closures, which could in theory be executed
-            // each on its thread.
-            //
-            // FIXME: Find a way to specify that all the closures are
-            // executed on the same thread, to be rid of the Mutex?
-            let conditions_are_met = Arc::new(Mutex::new({
-                let mut vec = Vec::with_capacity(rule.conditions.len());
-                vec.resize(rule.conditions.len(), false);
-                vec
-            }));
-
-            for (condition, index) in rule.conditions.iter().zip(0 as usize..) {
-                let conditions_are_met = conditions_are_met.clone();
-                // A mapping from `ServiceId` to `true` (the condition
-                // is met for this service) or `false` (the condition
-                // isn't met for this service).
-                let mut inputs_are_met = HashMap::new();
-
+        let mut per_rule : Vec<_> = self.state.rules.iter().zip(0 as usize..).map(|(rule, rule_index)| {
+            let per_condition = rule.conditions.iter().zip(0 as usize..).map(|(condition, condition_index)| {
                 let options: Vec<_> = condition.source.iter().map(|input| {
                     api::WatchOptions::new()
                         .with_inputs(input.clone())
@@ -170,62 +152,123 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
                 // optimized by `watcher`) or condition checking
                 // (which we should eventually optimize, if we find
                 // out that we end up with large rulesets).
+
+                let tx2 = self.tx.clone();
                 witnesses.push(
                     Env::API::register_service_watch(
                         options,
                         move |event| {
-                            match event {
-                                WatchEvent::InputRemoved(id) => {
-                                    inputs_are_met.remove(&id);
-                                },
-                                WatchEvent::InputAdded(id) => {
-                                    // An input was added. Note that there is
-                                    // a possibility that the input was not
-                                    // empty, in case we received messages in
-                                    // the wrong order.
-                                    inputs_are_met.insert(id, false);
-                                }
-                                WatchEvent::Value{from: id, value} => {
-                                    use std::mem::replace;
-
-                                    // An input was updated. Note that there is
-                                    // a possibility that the input was
-                                    // empty, in case we received messages in
-                                    // the wrong order.
-                                    let input_is_met = condition.range.contains(&value);
-                                    inputs_are_met.insert(id, input_is_met); // FIXME: Could be used to optimize
-
-                                    // 1. Is there at least one input_is_met = true in this condition?
-                                    let some_input_is_met = input_is_met ||
-                                        inputs_are_met.values().find(|is_met| **is_met).is_some();
-                                    let mut conditions_are_met = conditions_are_met.lock().unwrap();
-                                    // This can fail only if one of the threads has already panicked, that's ok with us.
-                                    conditions_are_met[index] = some_input_is_met;
-
-                                    // 2. Are all conditions in this rule met?
-                                    let all_conditions_are_met = conditions_are_met.iter().find(|is_met| **is_met).is_some();
-
-                                    // Release the lock as early as possible.
-                                    drop(conditions_are_met);
-
-                                    // 3. Is the rule already met?
-                                    // FIXME: Why does this build?
-                                    let rule_was_met = replace(&mut rule_is_met, all_conditions_are_met);
-
-                                    if !rule_was_met && all_conditions_are_met {
-                                        // Ahah, we have just triggered the statements!
-                                        for statement in &rule.execute {
-                                            let _ignore = statement.eval(); // FIXME: Report errors
-                                        }
-                                    }
-                                }
-                            }
+                            let _ignored = tx2.send(ExecutionOp::Update {
+                                event: event,
+                                rule_index: rule_index,
+                                condition_index: condition_index,
+                            });
+                            // We ignore the result. Errors simply
+                            // mean that the thread is already down,
+                            // in which case we don't care about
+                            // messages.
                         }));
+                let range = condition.range.clone();
+                ConditionState {
+                    match_is_met: false,
+                    per_input: HashMap::new(),
+                    range: range,
                 }
-        }
+            }).collect();
 
-        loop {
-            // FIXME: Receive
+            RuleState {
+                rule_is_met: false,
+                per_condition: per_condition
+            }
+        }).collect();
+
+        for msg in self.rx.iter() {
+            match msg {
+                ExecutionOp::Stop(cb) => {
+                    // Leave the loop. Watching will stop once
+                    // `witnesses` is dropped.
+                    cb(Ok(()));
+                    return;
+                },
+                ExecutionOp::Update {
+                    event,
+                    rule_index,
+                    condition_index,
+                } => match event {
+                    WatchEvent::InputRemoved(id) => {
+                        per_rule[rule_index]
+                            .per_condition[condition_index]
+                            .per_input
+                            .remove(&id);
+                    },
+                    WatchEvent::InputAdded(id) => {
+                        // An input was added. Note that there is
+                        // a possibility that the input was not
+                        // empty, in case we received messages in
+                        // the wrong order.
+                        per_rule[rule_index]
+                            .per_condition[condition_index]
+                            .per_input
+                            .insert(id, false);
+                    }
+                    WatchEvent::Value{from: id, value} => {
+                        use std::mem::replace;
+
+                        // An input was updated. Note that there is
+                        // a possibility that the input was
+                        // empty, in case we received messages in
+                        // the wrong order.
+
+                        let input_is_met : bool =
+                            per_rule[rule_index]
+                            .per_condition[condition_index]
+                            .range
+                            .contains(&value);
+
+                        per_rule[rule_index]
+                            .per_condition[condition_index]
+                            .per_input
+                            .insert(id, input_is_met); // FIXME: Could be used to optimize
+
+                        // 1. Is the match met?
+                        //
+                        // The match is met iff any of the inputs
+                        // meets the condition.
+                        let some_input_is_met = input_is_met ||
+                            per_rule[rule_index]
+                            .per_condition[condition_index]
+                            .per_input
+                            .values().find(|is_met| **is_met).is_some();
+
+                        per_rule[rule_index]
+                            .per_condition[condition_index]
+                            .match_is_met = some_input_is_met;
+
+                        // 2. Is the condition met?
+                        //
+                        // The condition is met iff all of the
+                        // matches are met.
+                        let condition_is_met =
+                            per_rule[rule_index]
+                            .per_condition
+                            .iter()
+                            .find(|condition_state| condition_state.match_is_met)
+                            .is_some();
+
+                        // 3. Are we in a case in which the
+                        // condition was not met and is now met?
+                        let condition_was_met =
+                            replace(&mut per_rule[rule_index].rule_is_met, condition_is_met);
+
+                        if !condition_was_met && condition_is_met {
+                            // Ahah, we have just triggered the statements!
+                            for statement in &self.state.rules[rule_index].execute {
+                                let _ignore = statement.eval(); // FIXME: Report errors
+                            }
+                        }
+                    }
+                }
+            };
         }
     }
 }

@@ -165,6 +165,8 @@ impl<Env> ExecutionTask<Env> where Env: ExecutableDevEnv {
             let per_condition = rule.conditions.iter().zip(0 as usize..).map(|(condition, condition_index)| {
                 let options: Vec<_> = condition.source.iter().map(|input| {
                     fxbox_taxonomy::api::WatchOptions::new()
+                        .with_watch_values(true)
+                        .with_watch_topology(true)
                         .with_inputs(input.clone())
                 }).collect();
                 // We will often end up watching several times the

@@ -9,10 +9,8 @@ extern crate fxbox_thinkerbell;
 extern crate fxbox_taxonomy;
 
 use fxbox_thinkerbell::compile::ExecutableDevEnv;
-use fxbox_thinkerbell::run::{Execution, ExecutionEvent};
+use fxbox_thinkerbell::run::Execution;
 use fxbox_thinkerbell::parse::Parser;
-use fxbox_thinkerbell::values::Range;
-use fxbox_thinkerbell::util::Phantom;
 
 use fxbox_taxonomy::devices::*;
 use fxbox_taxonomy::selector::*;
@@ -68,7 +66,7 @@ impl TestEnv {
     }
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 /// Instructions given to the simulator.
 pub enum Instruction {
     AddNodes(Vec<Node>),
@@ -99,10 +97,11 @@ enum Op {
     InjectInputValue{id: ServiceId, value: Value},
 }
 
+#[derive(Debug)]
 enum Update {
     Put { id: ServiceId, value: Value, result: Result<(), String> },
-    Inject { id: ServiceId, value: Value, result: Result<(), String> },
-    Done(String),
+//    Inject { id: ServiceId, value: Value, result: Result<(), String> },
+    Done,
 }
 
 struct InputWithState {
@@ -176,15 +175,20 @@ impl APIBackEnd {
 
         // The list of watchers watching for new values on this input.
         let watchers = self.watchers.iter().filter(|&&(ref options, _)| {
+            println!("Does the watcher watch values? {}", options.should_watch_values);
             options.should_watch_values &&
                 options.source.matches(&input.input)
         });
+        let mut count = 0;
         for watcher in watchers {
+            count += 1;
+            println!("Informing watcher");
             watcher.1(WatchEvent::Value {
                 from: id.clone(),
                 value: value.clone()
             });
         }
+        println!("Informed {} watchers out of {}", count, self.watchers.len());
     }
 
     fn put_value(&mut self,
@@ -216,8 +220,7 @@ impl APIBackEnd {
             });
             (output.id.clone(), result)
         }).collect();
-        cb(results);
-        (*self.post_updates)(Update::Done("put".to_owned()));
+        cb(results)
     }
 }
 
@@ -258,6 +261,7 @@ impl APIFrontEnd {
                     SendValue{selectors, value, cb} => api.put_value(selectors, value, cb),
                     InjectInputValue{id, value} => api.inject_input_value(id, value),
                 }
+                (*api.post_updates)(Update::Done)
             }
         });
         APIFrontEnd {
@@ -324,8 +328,21 @@ fn main () {
     use fxbox_thinkerbell::run::ExecutionEvent::*;
 
     println!("Preparing simulator.");
-    let env = TestEnv::new(|_|{});
-
+    let (tx, rx) = channel();
+    let env = TestEnv::new(move |event| {
+        let _ = tx.send(event);
+    });
+    let (tx_done, rx_done) = channel();
+    thread::spawn(move || {
+        for event in rx.iter() {
+            match event {
+                Update::Done => (),
+                event => println!("Event: {:?}", event)
+            }
+            let _ = tx_done.send(()).unwrap();
+        }
+    });
+    
     let args = docopt::Docopt::new(USAGE)
         .and_then(|d| d.argv(std::env::args().into_iter()).parse())
         .unwrap_or_else(|e| e.exit());
@@ -347,12 +364,12 @@ fn main () {
 
     println!("Loading rulesets.");
     for path in args.get_vec("--ruleset") {
-        print!("Loading ruleset from {}... ", path);
+        print!("Loading ruleset from {}\n", path);
         let mut file = File::open(path).unwrap();
         let mut source = String::new();
         file.read_to_string(&mut source).unwrap();
         let script = Parser::parse(source).unwrap();
-        print!(" launching... ");
+        print!("Ruleset loaded, launching... ");
 
         let mut runner = Execution::<TestEnv>::new();
         let (tx, rx) = channel();
@@ -365,21 +382,23 @@ fn main () {
     }
 
     println!("Loading sequences of events.");
-
     for path in args.get_vec("--events") {
-        print!("Loading events from {}...", path);
+        println!("Loading events from {}...", path);
         let mut file = File::open(path).unwrap();
         let mut source = String::new();
         file.read_to_string(&mut source).unwrap();
         let script : Vec<Instruction> = serde_json::from_str(&source).unwrap();
-        println!(" playing sequence of events.");
+        println!("Sequence of events loaded, playing...");
 
         for event in script {
             thread::sleep(slowdown.clone());
+            println!("Playing: {:?}", event);
             env.execute(event);
+            rx_done.recv().unwrap();
         }
     }
 
     println!("Simulation complete.");
+    thread::sleep(Duration::new(100, 0));
 }
 

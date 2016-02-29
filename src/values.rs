@@ -1,9 +1,12 @@
+//! Manipulating values received from services and/or meant to be sent
+//! to services.
 use fxbox_taxonomy::values::{Value, Type};
 
 use serde::ser::Serializer;
 use serde::de::Deserializer;
 
 #[derive(Clone, Deserialize, Serialize)]
+/// A comparison between two values.
 pub enum Range {
     /// Leq(x) accepts any value v such that v <= x.
     Leq(Value),
@@ -20,6 +23,7 @@ pub enum Range {
     OutOfStrict {min:Value, max:Value},
 
 
+    /// Eq(x) accespts any value v such that v == x
     Eq(Value),
 }
 

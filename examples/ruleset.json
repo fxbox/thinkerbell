@@ -5,20 +5,11 @@
         {
           "source": [
             {
-              "id": {
-                "Empty": []
-              },
-              "parent": {
-                "Empty": []
-              },
-              "tags": [],
               "kind": {
                 "Exactly": {
                   "CurrentTimeOfDay": []
                 }
-              },
-              "poll": null,
-              "trigger": null
+              }
             }
           ],
           "kind": {
@@ -29,25 +20,36 @@
               "Duration": 5
             }
           }
+        },
+        {
+          "source": [
+            {
+              "kind": {
+                "Exactly": {
+                  "CurrentTimeOfDay": []
+                }
+              }
+            }
+          ],
+          "kind": {
+            "CurrentTimeOfDay": []
+          },
+          "range": {
+            "Leq": {
+              "Duration": 2
+            }
+          }
         }
       ],
       "execute": [
         {
           "destination": [
             {
-              "id": {
-                "Empty": []
-              },
-              "parent": {
-                "Empty": []
-              },
-              "tags": [],
               "kind": {
                 "Exactly": {
                   "Ready": []
                 }
-              },
-              "push": null
+              }
             }
           ],
           "value": {

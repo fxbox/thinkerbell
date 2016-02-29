@@ -1,3 +1,4 @@
+//! Parsing scripts.
 use ast::{Script, UncheckedCtx};
 
 extern crate serde_json;

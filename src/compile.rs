@@ -1,17 +1,21 @@
 //! A script compiler
 //!
-//! This compiler take untrusted code (`Script<UncheckedCtx,
-//! UncheckedEnv>`) and performs the following transformations and
-//! checks:
+//! This compiler take untrusted code (`Script<UncheckedCtx>`) and
+//! performs the following transformations and checks:
+//!
 //! - Ensure that the `Script` has at least one `Rule`.
-//! - Ensure that each `Rule `has at least one `Conjunction`.
-//! - Ensure that each `Conjunction` has at least one `Condition`.
-//! - Transform each `Condition` to make sure that the type of the
-//!   `range` matches the type of the `input`.
-//! - Ensure that in each `Statement`, the type of the `value` matches
-//!   the type of the `destination`.
-//! - Introduce markers to keep track of which conditions were already
-//!   met last time they were evaluated.
+//! - Ensure that each `Rule` has at least one `Match`.
+//! - Ensure that each `Rule` has at least one `Statement`.
+//! - Ensure that each `Match` has at least one `source`.
+//! - Ensure that each `Statement` has at least one `destination`.
+//! - Ensure that in each `Match`, the type of `range` matches
+//!   the `kind`.
+//! - Ensure that in each `Statement`, the type of `value` matches
+//!   the `kind`.
+//! - Transform each `Match` to make sure that the kind of the
+//!   `source` matches the `kind`, even if devices change.
+//! - Transform each `Statement` to make sure that the kind of the
+//!   `destination` matches the `kind`, even if devices change.
 
 use std::marker::PhantomData;
 
@@ -93,6 +97,7 @@ impl<Env> Compiler<Env> where Env: ExecutableDevEnv {
         })
     }
 
+    /// Attempt to compile a script.
     pub fn compile(&self, script: Script<UncheckedCtx>)
                    -> Result<Script<CompiledCtx<Env>>, Error> {
         self.compile_script(script)
@@ -104,7 +109,7 @@ impl<Env> Compiler<Env> where Env: ExecutableDevEnv {
             return Err(Error::SourceError(SourceError::NoRules));
         }
         let rules = try!(map(script.rules, |rule| {
-            self.compile_trigger(rule)
+            self.compile_rule(rule)
         }));
         Ok(Script {
             rules: rules,
@@ -112,13 +117,13 @@ impl<Env> Compiler<Env> where Env: ExecutableDevEnv {
         })
     }
 
-    fn compile_trigger(&self, trigger: Rule<UncheckedCtx>) -> Result<Rule<CompiledCtx<Env>>, Error>
+    fn compile_rule(&self, trigger: Rule<UncheckedCtx>) -> Result<Rule<CompiledCtx<Env>>, Error>
     {
         if trigger.execute.len() == 0 {
-            return Err(Error::SourceError(SourceError::NoStatements));
+            return Err(Error::SourceError(SourceError::NoStatement));
         }
         if trigger.conditions.len() == 0 {
-            return Err(Error::SourceError(SourceError::NoConditions));
+            return Err(Error::SourceError(SourceError::NoMatch));
         }
         let conditions = try!(map(trigger.conditions, |match_| {
             self.compile_match(match_)
@@ -135,6 +140,9 @@ impl<Env> Compiler<Env> where Env: ExecutableDevEnv {
 
     fn compile_match(&self, match_: Match<UncheckedCtx>) -> Result<Match<CompiledCtx<Env>>, Error>
     {
+        if match_.source.len() == 0 {
+            return Err(Error::SourceError(SourceError::NoMatchSource));
+        }
         let typ = match match_.range.get_type() {
             Err(_) => return Err(Error::TypeError(TypeError::InvalidRange)),
             Ok(typ) => typ
@@ -142,7 +150,11 @@ impl<Env> Compiler<Env> where Env: ExecutableDevEnv {
         if match_.kind.get_type() != typ {
             return Err(Error::TypeError(TypeError::KindAndRangeDoNotAgree));
         }
-        let source = match_.source.iter().map(|input| input.clone().with_kind(match_.kind.clone())).collect();
+        let source = match_.source
+            .iter()
+            .map(|input| input.clone()
+                 .with_kind(match_.kind.clone()))
+            .collect();
         Ok(Match {
             source: source,
             kind: match_.kind,
@@ -153,7 +165,17 @@ impl<Env> Compiler<Env> where Env: ExecutableDevEnv {
 
     fn compile_statement(&self, statement: Statement<UncheckedCtx>) -> Result<Statement<CompiledCtx<Env>>, Error>
     {
-        let destination = statement.destination.iter().map(|output| output.clone().with_kind(statement.kind.clone())).collect();
+        if statement.destination.len() == 0 {
+            return Err(Error::SourceError(SourceError::NoDestination));
+        }
+        if statement.kind.get_type() != statement.value.get_type() {
+            return Err(Error::TypeError(TypeError::KindAndValueDoNotAgree));
+        }
+        let destination = statement.destination
+            .iter()
+            .map(|output| output.clone()
+                 .with_kind(statement.kind.clone()))
+            .collect();
         Ok(Statement {
             destination: destination,
             value: statement.value,

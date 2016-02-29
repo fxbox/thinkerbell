@@ -10,7 +10,7 @@ use util::Phantom;
 
 use fxbox_taxonomy::values::Value;
 use fxbox_taxonomy::devices::*;
-use fxbox_taxonomy::requests::*;
+use fxbox_taxonomy::selector::*;
 
 use serde::ser::{Serialize, Serializer};
 use serde::de::{Deserialize, Deserializer, Error};
@@ -68,7 +68,7 @@ pub struct Match<Ctx> where Ctx: Context {
     /// The set of inputs to watch. Note that the set of inputs may
     /// change (e.g. when devices are relabelled) without rebooting
     /// the script.
-    pub source: Vec<InputRequest>,
+    pub source: Vec<InputSelector>,
 
     pub kind: ServiceKind,
     /// The range of values for which the condition is considered met.
@@ -86,7 +86,7 @@ pub struct Match<Ctx> where Ctx: Context {
 #[derive(Serialize, Deserialize)]
 pub struct Statement<Ctx> where Ctx: Context {
     /// The resource to which this command applies.
-    pub destination: Vec<OutputRequest>,
+    pub destination: Vec<OutputSelector>,
 
     /// Data to send to the resource. During compilation, we check
     /// that the type of `value` is compatible with that of

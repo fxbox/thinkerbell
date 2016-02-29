@@ -15,7 +15,7 @@ use fxbox_thinkerbell::values::Range;
 use fxbox_thinkerbell::util::Phantom;
 
 use fxbox_taxonomy::devices::*;
-use fxbox_taxonomy::requests::*;
+use fxbox_taxonomy::selector::*;
 use fxbox_taxonomy::values::*;
 use fxbox_taxonomy::api::{API, WatchEvent, WatchOptions};
 
@@ -23,12 +23,12 @@ type APIError = fxbox_taxonomy::api::Error;
 
 use std::io::prelude::*;
 use std::fs::File;
-use std::sync::Mutex;
 use std::collections::HashMap;
 use std::sync::mpsc::{channel, Sender};
 use std::thread;
 use std::time::Duration;
 use std::sync::Arc;
+use std::str::FromStr;
 
 use serde::ser::{Serialize, Serializer};
 use serde::de::{Deserialize, Deserializer};
@@ -38,8 +38,8 @@ Usage: simulator [options]...
 
 -h, --help            Show this message.
 -r, --ruleset <path>  Load decision rules from a file.
--d, --devices <path>  Load devices from a file.
--s, --slowdown <num>  Duration of each tick, in ms. Default: 1ms. 
+-e, --events <path>   Load events from a file.
+-s, --slowdown <num>  Duration of each tick, in ms. Default: no slowdown. 
 ";
 
 #[derive(Default, Serialize, Deserialize)]
@@ -62,13 +62,41 @@ impl TestEnv {
             front: APIFrontEnd::new(cb)
         }
     }
+
+    pub fn execute(&self, instruction: Instruction) {
+        self.front.tx.send(instruction.as_op()).unwrap();
+    }
 }
 
+#[derive(Serialize, Deserialize)]
+/// Instructions given to the simulator.
+pub enum Instruction {
+    AddNodes(Vec<Node>),
+    AddInputs(Vec<Service<Input>>),
+    AddOutputs(Vec<Service<Output>>),
+    InjectInputValue{id: ServiceId, value: Value},
+}
+impl Instruction {
+    fn as_op(self) -> Op {
+        use Instruction::*;
+        match self {
+            AddNodes(vec) => Op::AddNodes(vec),
+            AddInputs(vec) => Op::AddInputs(vec),
+            AddOutputs(vec) => Op::AddOutputs(vec),
+            InjectInputValue{id, value} => Op::InjectInputValue{id:id, value: value}
+        }
+    }
+}
+
+
+/// Operations internal to the simulator.
 enum Op {
     AddNodes(Vec<Node>),
     AddInputs(Vec<Service<Input>>),
     AddOutputs(Vec<Service<Output>>),
     AddWatch{options: Vec<WatchOptions>, cb: Box<Fn(WatchEvent) + Send + 'static>},
+    SendValue{selectors: Vec<OutputSelector>, value: Value, cb: Box<Fn(Vec<(ServiceId, Result<(), APIError>)>) + Send>},
+    InjectInputValue{id: ServiceId, value: Value},
 }
 
 enum Update {
@@ -113,7 +141,7 @@ impl APIBackEnd {
                 assert!(previous.is_none());
             }
         }
-        // In a real implementation, this should update all NodeRequest
+        // In a real implementation, this should update all NodeSelector
     }
     fn add_inputs(&mut self, inputs: Vec<Service<Input>>) {
         for input in inputs {
@@ -125,14 +153,14 @@ impl APIBackEnd {
                 });
             assert!(previous.is_none());
         }
-        // In a real implementation, this should update all InputRequests
+        // In a real implementation, this should update all InputSelectors
     }
     fn add_outputs(&mut self, outputs: Vec<Service<Output>>)  {
         for output in outputs {
             let previous = self.outputs.insert(output.id.clone(), output);
             assert!(previous.is_none());
         }
-        // In a real implementation, this should update all OutputRequests
+        // In a real implementation, this should update all OutputSelectors
     }
 
     fn add_watch(&mut self, options: Vec<WatchOptions>, cb: Box<Fn(WatchEvent)>) {
@@ -151,7 +179,7 @@ impl APIBackEnd {
             options.should_watch_values &&
                 options.source.matches(&input.input)
         });
-        for mut watcher in watchers {
+        for watcher in watchers {
             watcher.1(WatchEvent::Value {
                 from: id.clone(),
                 value: value.clone()
@@ -159,23 +187,36 @@ impl APIBackEnd {
         }
     }
 
-    fn put_value(&mut self, requests: Vec<OutputRequest>, value: Value) {
+    fn put_value(&mut self,
+                 selectors: Vec<OutputSelector>,
+                 value: Value,
+                 cb: Box<Fn(Vec<(ServiceId, Result<(), APIError>)>)>)
+    {
         // Very suboptimal implementation.
-        let outputs = self.outputs.values().filter(|output|
-            requests.iter().find(|request| request.matches(output)).is_some());
-        for output in outputs {
-            let result =
-                if value.get_type() == output.mechanism.kind.get_type() {
-                    Ok(())
-                } else {
-                    Err(format!("Invalid type, expected {:?}, got {:?}", value.get_type(), output.mechanism.kind.get_type()))
-                };
+        let outputs = self.outputs
+            .values()
+            .filter(|output|
+                    selectors.iter()
+                    .find(|selector| selector.matches(output))
+                    .is_some());
+        let results = outputs.map(|output| {
+            let result;
+            let internal_result;
+            if value.get_type() == output.mechanism.kind.get_type() {
+                result = Ok(());
+                internal_result = Ok(());
+            } else {
+                result = Err(fxbox_taxonomy::api::Error::TypeError);
+                internal_result = Err(format!("Invalid type, expected {:?}, got {:?}", value.get_type(), output.mechanism.kind.get_type()));
+            }
             (*self.post_updates)(Update::Put {
                 id: output.id.clone(),
                 value: value.clone(),
-                result: result
+                result: internal_result
             });
-        }
+            (output.id.clone(), result)
+        }).collect();
+        cb(results);
         (*self.post_updates)(Update::Done("put".to_owned()));
     }
 }
@@ -202,7 +243,7 @@ impl Default for APIFrontEnd {
 }
 
 impl APIFrontEnd {
-    fn new<F>(cb: F) -> Self
+    pub fn new<F>(cb: F) -> Self
         where F: Fn(Update) + Send + 'static {
         let (tx, rx) = channel();
         thread::spawn(move || {
@@ -214,6 +255,8 @@ impl APIFrontEnd {
                     AddInputs(vec) => api.add_inputs(vec),
                     AddOutputs(vec) => api.add_outputs(vec),
                     AddWatch{options, cb} => api.add_watch(options, cb),
+                    SendValue{selectors, value, cb} => api.put_value(selectors, value, cb),
+                    InjectInputValue{id, value} => api.inject_input_value(id, value),
                 }
             }
         });
@@ -226,41 +269,47 @@ impl APIFrontEnd {
 impl API for APIFrontEnd {
     type WatchGuard = ();
 
-    fn get_nodes(&self, _: &Vec<NodeRequest>) -> Vec<Node> {
+    fn get_nodes(&self, _: &Vec<NodeSelector>) -> Vec<Node> {
         unimplemented!()
     }
 
-    fn put_node_tag(&self, _: &Vec<NodeRequest>, _: &Vec<String>) -> usize {
+    fn put_node_tag(&self, _: &Vec<NodeSelector>, _: &Vec<String>) -> usize {
         unimplemented!()
     }
 
-    fn delete_node_tag(&self, _: &Vec<NodeRequest>, _: String) -> usize {
+    fn delete_node_tag(&self, _: &Vec<NodeSelector>, _: String) -> usize {
         unimplemented!()
     }
 
-    fn get_input_services(&self, _: &Vec<InputRequest>) -> Vec<Service<Input>> {
+    fn get_input_services(&self, _: &Vec<InputSelector>) -> Vec<Service<Input>> {
         unimplemented!()
     }
-    fn get_output_services(&self, _: &Vec<OutputRequest>) -> Vec<Service<Output>> {
+    fn get_output_services(&self, _: &Vec<OutputSelector>) -> Vec<Service<Output>> {
         unimplemented!()
     }
-    fn put_input_tag(&self, _: &Vec<InputRequest>, _: &Vec<String>) -> usize {
+    fn put_input_tag(&self, _: &Vec<InputSelector>, _: &Vec<String>) -> usize {
         unimplemented!()
     }
-    fn put_output_tag(&self, _: &Vec<OutputRequest>, _: &Vec<String>) -> usize {
+    fn put_output_tag(&self, _: &Vec<OutputSelector>, _: &Vec<String>) -> usize {
         unimplemented!()
     }
-    fn delete_input_tag(&self, _: &Vec<InputRequest>, _: &Vec<String>) -> usize {
+    fn delete_input_tag(&self, _: &Vec<InputSelector>, _: &Vec<String>) -> usize {
         unimplemented!()
     }
-    fn delete_output_tag(&self, _: &Vec<InputRequest>, _: &Vec<String>) -> usize {
+    fn delete_output_tag(&self, _: &Vec<InputSelector>, _: &Vec<String>) -> usize {
         unimplemented!()
     }
-    fn get_service_value(&self, _: &Vec<InputRequest>) -> Vec<(ServiceId, Result<Value, APIError>)> {
+    fn get_service_value(&self, _: &Vec<InputSelector>) -> Vec<(ServiceId, Result<Value, APIError>)> {
         unimplemented!()
     }
-    fn put_service_value(&self, _: &Vec<OutputRequest>, _: Value) -> Vec<(ServiceId, Result<(), APIError>)> {
-        unimplemented!()
+    fn put_service_value(&self, selectors: &Vec<OutputSelector>, value: Value) -> Vec<(ServiceId, Result<(), APIError>)> {
+        let (tx, rx) = channel();
+        self.tx.send(Op::SendValue {
+            selectors: selectors.clone(),
+            value: value,
+            cb: Box::new(move |result| { tx.send(result).unwrap(); })
+        }).unwrap();
+        rx.recv().unwrap()
     }
     fn register_service_watch(&self, options: Vec<WatchOptions>, cb: Box<Fn(WatchEvent) + Send + 'static>) -> Self::WatchGuard {
         self.tx.send(Op::AddWatch {
@@ -272,24 +321,38 @@ impl API for APIFrontEnd {
 
 }
 fn main () {
+    use fxbox_thinkerbell::run::ExecutionEvent::*;
+
+    println!("Preparing simulator.");
     let env = TestEnv::new(|_|{});
 
-    use fxbox_thinkerbell::run:: ExecutionEvent::*;
     let args = docopt::Docopt::new(USAGE)
         .and_then(|d| d.argv(std::env::args().into_iter()).parse())
         .unwrap_or_else(|e| e.exit());
 
+    let slowdown = match args.find("--slowdown") {
+        None => Duration::new(0, 0),
+        Some(value) => {
+            let str = value.as_str();
+            if str.is_empty() {
+                Duration::new(0, 0)
+            } else {
+                let ms = u64::from_str(value.as_str()).unwrap();
+                Duration::new(ms / 1000, (ms as u32 % 1000) * 1_000_000)
+            }
+        }
+    };
+
     let mut runners = Vec::new();
 
-    println!("Preparing simulator");
-
+    println!("Loading rulesets.");
     for path in args.get_vec("--ruleset") {
         print!("Loading ruleset from {}... ", path);
         let mut file = File::open(path).unwrap();
         let mut source = String::new();
         file.read_to_string(&mut source).unwrap();
         let script = Parser::parse(source).unwrap();
-        print!("launching... ");
+        print!(" launching... ");
 
         let mut runner = Execution::<TestEnv>::new();
         let (tx, rx) = channel();
@@ -301,6 +364,22 @@ fn main () {
         runners.push(runner);
     }
 
-    thread::sleep(std::time::Duration::new(100, 0));
+    println!("Loading sequences of events.");
+
+    for path in args.get_vec("--events") {
+        print!("Loading events from {}...", path);
+        let mut file = File::open(path).unwrap();
+        let mut source = String::new();
+        file.read_to_string(&mut source).unwrap();
+        let script : Vec<Instruction> = serde_json::from_str(&source).unwrap();
+        println!(" playing sequence of events.");
+
+        for event in script {
+            thread::sleep(slowdown.clone());
+            env.execute(event);
+        }
+    }
+
+    println!("Simulation complete.");
 }
 

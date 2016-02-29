@@ -61,13 +61,19 @@ impl<Env> Context for CompiledCtx<Env> where Env: Serialize + Deserialize {
 #[derive(Debug)]
 pub enum SourceError {
     /// The source doesn't define any rule.
-    NoRules,
+    NoRule,
 
     /// A rule doesn't have any statements.
-    NoStatements,
+    NoStatement,
 
     /// A rule doesn't have any condition.
-    NoConditions,
+    NoMatch,
+
+    /// A match doesn't have any source.
+    NoMatchSource,
+
+    /// A statement doesn't have any destination.
+    NoStatementDestination,
 }
 
 #[derive(Debug)]
@@ -76,8 +82,12 @@ pub enum TypeError {
     InvalidRange,
 
     /// The range has one type but this type is incompatible with the
-    /// kind of the `Condition`.
+    /// kind of the `Match`.
     KindAndRangeDoNotAgree,
+
+    /// The value has one type but this type is incompatible with the
+    /// kind of the `Statement`.
+    KindAndValueDoNotAgree,
 }
 
 #[derive(Debug)]
@@ -106,7 +116,7 @@ impl<Env> Compiler<Env> where Env: ExecutableDevEnv {
     fn compile_script(&self, script: Script<UncheckedCtx>) -> Result<Script<CompiledCtx<Env>>, Error>
     {
         if script.rules.len() == 0 {
-            return Err(Error::SourceError(SourceError::NoRules));
+            return Err(Error::SourceError(SourceError::NoRule));
         }
         let rules = try!(map(script.rules, |rule| {
             self.compile_rule(rule)
@@ -166,7 +176,7 @@ impl<Env> Compiler<Env> where Env: ExecutableDevEnv {
     fn compile_statement(&self, statement: Statement<UncheckedCtx>) -> Result<Statement<CompiledCtx<Env>>, Error>
     {
         if statement.destination.len() == 0 {
-            return Err(Error::SourceError(SourceError::NoDestination));
+            return Err(Error::SourceError(SourceError::NoStatementDestination));
         }
         if statement.kind.get_type() != statement.value.get_type() {
             return Err(Error::TypeError(TypeError::KindAndValueDoNotAgree));

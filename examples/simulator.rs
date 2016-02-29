@@ -37,7 +37,7 @@ Usage: simulator [options]...
 -h, --help            Show this message.
 -r, --ruleset <path>  Load decision rules from a file.
 -e, --events <path>   Load events from a file.
--s, --slowdown <num>  Duration of each tick, in ms. Default: no slowdown. 
+-s, --slowdown <num>  Duration of each tick, in floating point seconds. Default: no slowdown. 
 ";
 
 #[derive(Default, Serialize, Deserialize)]
@@ -104,6 +104,7 @@ enum Update {
     Done,
 }
 
+#[derive(Debug)]
 struct InputWithState {
     input: Service<Input>,
     state: Option<Value>,
@@ -175,20 +176,15 @@ impl APIBackEnd {
 
         // The list of watchers watching for new values on this input.
         let watchers = self.watchers.iter().filter(|&&(ref options, _)| {
-            println!("Does the watcher watch values? {}", options.should_watch_values);
             options.should_watch_values &&
                 options.source.matches(&input.input)
         });
-        let mut count = 0;
         for watcher in watchers {
-            count += 1;
-            println!("Informing watcher");
             watcher.1(WatchEvent::Value {
                 from: id.clone(),
                 value: value.clone()
             });
         }
-        println!("Informed {} watchers out of {}", count, self.watchers.len());
     }
 
     fn put_value(&mut self,
@@ -336,10 +332,11 @@ fn main () {
     thread::spawn(move || {
         for event in rx.iter() {
             match event {
-                Update::Done => (),
-                event => println!("Event: {:?}", event)
+                Update::Done => {
+                    let _ = tx_done.send(()).unwrap();
+                },
+                event => println!("<<< {:?}", event)
             }
-            let _ = tx_done.send(()).unwrap();
         }
     });
     
@@ -350,12 +347,12 @@ fn main () {
     let slowdown = match args.find("--slowdown") {
         None => Duration::new(0, 0),
         Some(value) => {
-            let str = value.as_str();
-            if str.is_empty() {
+            let vec = value.as_vec();
+            if vec.is_empty() || vec[0].is_empty() {
                 Duration::new(0, 0)
             } else {
-                let ms = u64::from_str(value.as_str()).unwrap();
-                Duration::new(ms / 1000, (ms as u32 % 1000) * 1_000_000)
+                let s = f64::from_str(vec[0]).unwrap();
+                Duration::new(s as u64, (s.fract() * 1_000_000.0) as u32)
             }
         }
     };
@@ -373,7 +370,9 @@ fn main () {
 
         let mut runner = Execution::<TestEnv>::new();
         let (tx, rx) = channel();
-        runner.start(env.api(), script, move |res| {tx.send(res).unwrap();});
+        runner.start(env.api(), script, move |res| {
+            let _ = tx.send(res);
+        });
         match rx.recv().unwrap() {
             Starting { result: Ok(()) } => println!("ready."),
             err => panic!("Could not launch script {:?}", err)
@@ -392,7 +391,7 @@ fn main () {
 
         for event in script {
             thread::sleep(slowdown.clone());
-            println!("Playing: {:?}", event);
+            println!(">>> {:?}", event);
             env.execute(event);
             rx_done.recv().unwrap();
         }

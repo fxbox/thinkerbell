@@ -32,3 +32,7 @@ pub mod run;
 /// Miscellaneous internal utilities.
 pub mod util;
 
+pub mod simulator {
+    pub mod api;
+    pub mod instruction;
+}

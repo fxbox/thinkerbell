@@ -33,3 +33,5 @@ pub mod run;
 /// Miscellaneous internal utilities.
 pub mod util;
 
+/// Database for storing scripts.
+pub mod database;

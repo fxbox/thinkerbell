@@ -1,4 +1,6 @@
-extern crate rusqlite;
+use rusqlite;
+use std::path::Path;
+use std::error::Error;
 
 pub struct StoredScript {
     pub id: Option<i64>,
@@ -13,21 +15,21 @@ pub struct ScriptDatabase {
 
 impl ScriptDatabase {
 
-    pub fn new(filename: String) -> Self {
-        let connection = rusqlite::Connection::open(filename).unwrap();
-        connection.execute("CREATE TABLE IF NOT EXISTS scripts (
+    pub fn new(path: &Path) -> Result<Self, Box<Error>> {
+        let connection = try!(rusqlite::Connection::open(path));
+        try!(connection.execute("CREATE TABLE IF NOT EXISTS scripts (
             id          INTEGER PRIMARY KEY AUTOINCREMENT,
             name        TEXT NOT NULL UNIQUE,
             source      TEXT NOT NULL,
             is_active   BOOL NOT NULL DEFAULT 1
-        )", &[]).unwrap();
+        )", &[]));
 
-        ScriptDatabase {
+        Ok(ScriptDatabase {
             connection: connection
-        }
+        })
     }
 
-    pub fn save(&self, script: &mut StoredScript) -> rusqlite::Result<()> {
+    pub fn insert(&self, script: &mut StoredScript) -> rusqlite::Result<()> {
         if let Some(id) = script.id {
             self.connection.execute("UPDATE scripts SET name = $1, source = $2, is_active = $3 WHERE id = $4",
                 &[&script.name, &script.source, &script.is_active, &id])

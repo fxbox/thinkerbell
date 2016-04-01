@@ -1,0 +1,457 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `API` trait in crate `foxbox_taxonomy`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, API">
+
+    <title>foxbox_taxonomy::api::API - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>foxbox_taxonomy</a>::<wbr><a href='index.html'>api</a></p><script>window.sidebarCurrent = {name: 'API', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content trait">
+<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>foxbox_taxonomy</a>::<wbr><a href='index.html'>api</a>::<wbr><a class='trait' href=''>API</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-1596' class='srclink' href='../../src/foxbox_taxonomy/api.rs.html.html#255-708' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait API: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> {
+    type WatchGuard;
+    fn <a href='#tymethod.get_services' class='fnname'>get_services</a>(&amp;self, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.ServiceSelector.html' title='foxbox_taxonomy::selector::ServiceSelector'>ServiceSelector</a>&gt;) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Service.html' title='foxbox_taxonomy::services::Service'>Service</a>&gt;;
+    fn <a href='#tymethod.add_service_tags' class='fnname'>add_service_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.ServiceSelector.html' title='foxbox_taxonomy::selector::ServiceSelector'>ServiceSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>;
+    fn <a href='#tymethod.remove_service_tags' class='fnname'>remove_service_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.ServiceSelector.html' title='foxbox_taxonomy::selector::ServiceSelector'>ServiceSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>;
+    fn <a href='#tymethod.get_getter_channels' class='fnname'>get_getter_channels</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.GetterSelector.html' title='foxbox_taxonomy::selector::GetterSelector'>GetterSelector</a>&gt;) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Channel.html' title='foxbox_taxonomy::services::Channel'>Channel</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;&gt;;
+    fn <a href='#tymethod.get_setter_channels' class='fnname'>get_setter_channels</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.SetterSelector.html' title='foxbox_taxonomy::selector::SetterSelector'>SetterSelector</a>&gt;) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Channel.html' title='foxbox_taxonomy::services::Channel'>Channel</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Setter.html' title='foxbox_taxonomy::services::Setter'>Setter</a>&gt;&gt;;
+    fn <a href='#tymethod.add_getter_tags' class='fnname'>add_getter_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.GetterSelector.html' title='foxbox_taxonomy::selector::GetterSelector'>GetterSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>;
+    fn <a href='#tymethod.add_setter_tags' class='fnname'>add_setter_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.SetterSelector.html' title='foxbox_taxonomy::selector::SetterSelector'>SetterSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>;
+    fn <a href='#tymethod.remove_getter_tags' class='fnname'>remove_getter_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.GetterSelector.html' title='foxbox_taxonomy::selector::GetterSelector'>GetterSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>;
+    fn <a href='#tymethod.remove_setter_tags' class='fnname'>remove_setter_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.SetterSelector.html' title='foxbox_taxonomy::selector::SetterSelector'>SetterSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>;
+    fn <a href='#tymethod.fetch_values' class='fnname'>fetch_values</a>(&amp;self, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.GetterSelector.html' title='foxbox_taxonomy::selector::GetterSelector'>GetterSelector</a>&gt;, user: <a class='enum' href='../../foxbox_taxonomy/api/enum.User.html' title='foxbox_taxonomy::api::User'>User</a>) -&gt; <a class='type' href='../../foxbox_taxonomy/util/type.ResultMap.html' title='foxbox_taxonomy::util::ResultMap'>ResultMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;, <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='../../foxbox_taxonomy/values/enum.Value.html' title='foxbox_taxonomy::values::Value'>Value</a>&gt;, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;;
+    fn <a href='#tymethod.send_values' class='fnname'>send_values</a>(&amp;self, <a class='type' href='../../foxbox_taxonomy/util/type.TargetMap.html' title='foxbox_taxonomy::util::TargetMap'>TargetMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.SetterSelector.html' title='foxbox_taxonomy::selector::SetterSelector'>SetterSelector</a>, <a class='enum' href='../../foxbox_taxonomy/values/enum.Value.html' title='foxbox_taxonomy::values::Value'>Value</a>&gt;, user: <a class='enum' href='../../foxbox_taxonomy/api/enum.User.html' title='foxbox_taxonomy::api::User'>User</a>) -&gt; <a class='type' href='../../foxbox_taxonomy/util/type.ResultMap.html' title='foxbox_taxonomy::util::ResultMap'>ResultMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Setter.html' title='foxbox_taxonomy::services::Setter'>Setter</a>&gt;, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;;
+    fn <a href='#tymethod.watch_values' class='fnname'>watch_values</a>(&amp;self, watch: <a class='type' href='../../foxbox_taxonomy/util/type.TargetMap.html' title='foxbox_taxonomy::util::TargetMap'>TargetMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.GetterSelector.html' title='foxbox_taxonomy::selector::GetterSelector'>GetterSelector</a>, <a class='enum' href='../../foxbox_taxonomy/util/enum.Exactly.html' title='foxbox_taxonomy::util::Exactly'>Exactly</a>&lt;<a class='enum' href='../../foxbox_taxonomy/values/enum.Range.html' title='foxbox_taxonomy::values::Range'>Range</a>&gt;&gt;, on_event: <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../transformable_channels/mpsc/trait.ExtSender.html' title='transformable_channels::mpsc::ExtSender'>ExtSender</a>&lt;<a class='enum' href='../../foxbox_taxonomy/api/enum.WatchEvent.html' title='foxbox_taxonomy::api::WatchEvent'>WatchEvent</a>&gt;&gt;) -&gt; Self::<a class='trait' href='../../foxbox_taxonomy/api/trait.API.html' title='foxbox_taxonomy::api::API'>WatchGuard</a>;
+}</pre><div class='docblock'><p>A handle to the public API.</p>
+</div>
+            <h2 id='associated-types'>Associated Types</h2>
+            <div class='methods'>
+        <h3 id='associatedtype.WatchGuard' class='method stab '><code>type WatchGuard</code></h3><div class='docblock'><p>A value that causes a disconnection once it is dropped.</p>
+</div></div>
+            <h2 id='required-methods'>Required Methods</h2>
+            <div class='methods'>
+        <h3 id='tymethod.get_services' class='method stab '><code>fn <a href='#tymethod.get_services' class='fnname'>get_services</a>(&amp;self, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.ServiceSelector.html' title='foxbox_taxonomy::selector::ServiceSelector'>ServiceSelector</a>&gt;) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Service.html' title='foxbox_taxonomy::services::Service'>Service</a>&gt;</code></h3><div class='docblock'><p>Get the metadata on services matching some conditions.</p>
+
+<p>A call to <code>API::get_services(vec![req1, req2, ...])</code> will return
+the metadata on all services matching <em>either</em> <code>req1</code> or <code>req2</code>
+or ...</p>
+
+<h1 id='rest-api' class='section-header'><a href='#rest-api'>REST API</a></h1>
+<p><code>GET /api/v1/services</code></p>
+
+<h3 id='json' class='section-header'><a href='#json'>JSON</a></h3>
+<p>This call accepts as JSON argument a vector of <code>ServiceSelector</code>. See the documentation
+of <code>ServiceSelector</code> for more details.</p>
+
+<p>Example: Select all doors in the entrance (tags <code>door</code>, <code>entrance</code>)
+that support setter channel <code>OpenClosed</code></p>
+
+<pre class='rust rust-example-rendered'>
+
+<span class='kw'>let</span> <span class='ident'>source</span> <span class='op'>=</span> <span class='string'>r#&quot;[{
+  &quot;tags&quot;: [&quot;entrance&quot;, &quot;door&quot;],
+  &quot;getters&quot;: [
+    {
+      &quot;kind&quot;: &quot;OpenClosed&quot;
+    }
+  ]
+}]&quot;#</span>;
+</pre>
+
+<h2 id='errors' class='section-header'><a href='#errors'>Errors</a></h2>
+<p>In case of syntax error, Error 400, accompanied with a
+somewhat human-readable JSON string detailing the error.</p>
+
+<h2 id='success' class='section-header'><a href='#success'>Success</a></h2>
+<p>A JSON representing an array of <code>Service</code>. See the implementation
+of <code>Service</code> for details.</p>
+
+<h3 id='example' class='section-header'><a href='#example'>Example</a></h3>
+<pre class='rust rust-example-rendered'>
+<span class='string'>r#&quot;[{
+  &quot;tags&quot;: [&quot;entrance&quot;, &quot;door&quot;, &quot;somevendor&quot;],
+  &quot;id: &quot;some-service-id&quot;,
+  &quot;getters&quot;: [],
+  &quot;setters&quot;: [
+    &quot;tags&quot;: [&quot;tag 1&quot;, &quot;tag 2&quot;],
+    &quot;id&quot;: &quot;some-channel-id&quot;,
+    &quot;service&quot;: &quot;some-service-id&quot;,
+    &quot;updated&quot;: &quot;2014-11-28T12:00:09+00:00&quot;,
+    &quot;mechanism&quot;: &quot;setter&quot;,
+    &quot;kind&quot;: &quot;OnOff&quot;
+  ]
+}]&quot;#</span>;</pre>
+</div><h3 id='tymethod.add_service_tags' class='method stab '><code>fn <a href='#tymethod.add_service_tags' class='fnname'>add_service_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.ServiceSelector.html' title='foxbox_taxonomy::selector::ServiceSelector'>ServiceSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h3><div class='docblock'><p>Label a set of services with a set of tags.</p>
+
+<p>A call to <code>API::put_service_tag(vec![req1, req2, ...], vec![tag1, ...])</code> will label all the services matching <em>either</em> <code>req1</code> or
+<code>req2</code> or ... with <code>tag1</code>, ... and return the number of services
+matching any of the selectors.</p>
+
+<p>Some of the services may already be labelled with <code>tag1</code>, or
+<code>tag2</code>, ... They will not change state. They are counted in
+the resulting <code>usize</code> nevertheless.</p>
+
+<p>Note that this call is <em>not live</em>. In other words, if services
+are added after the call, they will not be affected.</p>
+
+<h1 id='rest-api-1' class='section-header'><a href='#rest-api-1'>REST API</a></h1>
+<p><code>POST /api/v1/services/tag</code></p>
+
+<h2 id='json-1' class='section-header'><a href='#json-1'>JSON</a></h2>
+<p>A JSON object with the following fields:
+- services: array - an array of ServiceSelector;
+- tags: array - an array of string</p>
+
+<pre class='rust rust-example-rendered'>
+
+<span class='string'>r#&quot;{
+  &quot;services&quot;: [{&quot;id&quot;: &quot;id 1&quot;}, {&quot;id&quot;: &quot;id 2&quot;}],
+  &quot;tags&quot;: [&quot;tag 1&quot;, &quot;tag 2&quot;]
+}&quot;#</span>;
+
+</pre>
+
+<h2 id='errors-1' class='section-header'><a href='#errors-1'>Errors</a></h2>
+<p>In case of syntax error, Error 400, accompanied with a
+somewhat human-readable JSON string detailing the error.</p>
+
+<h2 id='success-1' class='section-header'><a href='#success-1'>Success</a></h2>
+<p>A JSON string representing a number.</p>
+</div><h3 id='tymethod.remove_service_tags' class='method stab '><code>fn <a href='#tymethod.remove_service_tags' class='fnname'>remove_service_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.ServiceSelector.html' title='foxbox_taxonomy::selector::ServiceSelector'>ServiceSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h3><div class='docblock'><p>Remove a set of tags from a set of services.</p>
+
+<p>A call to <code>API::delete_service_tag(vec![req1, req2, ...], vec![tag1, ...])</code> will remove from all the services matching <em>either</em> <code>req1</code> or
+<code>req2</code> or ... all of the tags <code>tag1</code>, ... and return the number of services
+matching any of the selectors.</p>
+
+<p>Some of the services may not be labelled with <code>tag1</code>, or <code>tag2</code>,
+... They will not change state. They are counted in the
+resulting <code>usize</code> nevertheless.</p>
+
+<p>Note that this call is <em>not live</em>. In other words, if services
+are added after the call, they will not be affected.</p>
+
+<h1 id='rest-api-2' class='section-header'><a href='#rest-api-2'>REST API</a></h1>
+<p><code>DELETE /api/v1/services/tag</code></p>
+
+<h2 id='json-2' class='section-header'><a href='#json-2'>JSON</a></h2>
+<p>A JSON object with the following fields:
+- services: array - an array of ServiceSelector;
+- tags: array - an array of string</p>
+
+<pre class='rust rust-example-rendered'>
+
+
+<span class='string'>r#&quot;{
+  &quot;services&quot;: [{&quot;id&quot;: &quot;id 1&quot;}, {&quot;id&quot;: &quot;id 2&quot;}],
+  &quot;tags&quot;: [&quot;tag 1&quot;, &quot;tag 2&quot;]
+}&quot;#</span>;
+</pre>
+
+<h2 id='errors-2' class='section-header'><a href='#errors-2'>Errors</a></h2>
+<p>In case of syntax error, Error 400, accompanied with a
+somewhat human-readable JSON string detailing the error.</p>
+
+<h2 id='success-2' class='section-header'><a href='#success-2'>Success</a></h2>
+<p>A JSON string representing a number.</p>
+</div><h3 id='tymethod.get_getter_channels' class='method stab '><code>fn <a href='#tymethod.get_getter_channels' class='fnname'>get_getter_channels</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.GetterSelector.html' title='foxbox_taxonomy::selector::GetterSelector'>GetterSelector</a>&gt;) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Channel.html' title='foxbox_taxonomy::services::Channel'>Channel</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;&gt;</code></h3><div class='docblock'><p>Get a list of getters matching some conditions</p>
+
+<h1 id='rest-api-3' class='section-header'><a href='#rest-api-3'>REST API</a></h1>
+<p><code>GET /api/v1/channels/getters</code></p>
+
+<h3 id='json-3' class='section-header'><a href='#json-3'>JSON</a></h3>
+<p>This call accepts as JSON argument a vector of <code>GetterSelector</code>. See the documentation
+of <code>GetterSelector</code> for more details.</p>
+
+<p>Example: Select all doors in the entrance (tags <code>door</code>, <code>entrance</code>)
+that support setter channel <code>OpenClosed</code></p>
+
+<pre class='rust rust-example-rendered'>
+
+<span class='kw'>let</span> <span class='ident'>source</span> <span class='op'>=</span> <span class='string'>r#&quot;[{
+  &quot;tags&quot;: [&quot;entrance&quot;, &quot;door&quot;],
+  &quot;kind&quot;: &quot;OpenClosed&quot;
+}]&quot;#</span>;
+</pre>
+
+<h2 id='errors-3' class='section-header'><a href='#errors-3'>Errors</a></h2>
+<p>In case of syntax error, Error 400, accompanied with a
+somewhat human-readable JSON string detailing the error.</p>
+
+<h2 id='success-3' class='section-header'><a href='#success-3'>Success</a></h2>
+<p>A JSON representing an array of <code>Service</code>. See the implementation
+of <code>Service</code> for details.</p>
+
+<h3 id='example-1' class='section-header'><a href='#example-1'>Example</a></h3>
+<pre class='rust rust-example-rendered'>
+<span class='string'>r#&quot;[{
+  &quot;tags&quot;: [&quot;entrance&quot;, &quot;door&quot;, &quot;somevendor&quot;],
+  &quot;id: &quot;some-getter-id&quot;,
+  &quot;service&quot;: &quot;some-service-id&quot;,
+  &quot;updated&quot;: &quot;2014-11-28T12:00:09+00:00&quot;,
+  &quot;mechanism&quot;: &quot;getter&quot;,
+  &quot;kind&quot;: &quot;OnOff&quot;
+}]&quot;#</span>;</pre>
+</div><h3 id='tymethod.get_setter_channels' class='method stab '><code>fn <a href='#tymethod.get_setter_channels' class='fnname'>get_setter_channels</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.SetterSelector.html' title='foxbox_taxonomy::selector::SetterSelector'>SetterSelector</a>&gt;) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Channel.html' title='foxbox_taxonomy::services::Channel'>Channel</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Setter.html' title='foxbox_taxonomy::services::Setter'>Setter</a>&gt;&gt;</code></h3><div class='docblock'><p>Get a list of getters matching some conditions</p>
+
+<h1 id='rest-api-4' class='section-header'><a href='#rest-api-4'>REST API</a></h1>
+<p><code>GET /api/v1/channels</code></p>
+</div><h3 id='tymethod.add_getter_tags' class='method stab '><code>fn <a href='#tymethod.add_getter_tags' class='fnname'>add_getter_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.GetterSelector.html' title='foxbox_taxonomy::selector::GetterSelector'>GetterSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h3><div class='docblock'><p>Label a set of channels with a set of tags.</p>
+
+<p>A call to <code>API::put_{getter, setter}_tag(vec![req1, req2, ...], vec![tag1, ...])</code> will label all the channels matching <em>either</em> <code>req1</code> or
+<code>req2</code> or ... with <code>tag1</code>, ... and return the number of channels
+matching any of the selectors.</p>
+
+<p>Some of the channels may already be labelled with <code>tag1</code>, or
+<code>tag2</code>, ... They will not change state. They are counted in
+the resulting <code>usize</code> nevertheless.</p>
+
+<p>Note that this call is <em>not live</em>. In other words, if channels
+are added after the call, they will not be affected.</p>
+
+<h1 id='rest-api-5' class='section-header'><a href='#rest-api-5'>REST API</a></h1>
+<p><code>POST /api/v1/channels/tag</code></p>
+
+<h2 id='requests' class='section-header'><a href='#requests'>Requests</a></h2>
+<p>Any JSON that can be deserialized to</p>
+
+<pre class='rust rust-example-rendered'>
+{
+  <span class='ident'>set</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>GetterSelector</span><span class='op'>&gt;</span>,
+  <span class='ident'>tags</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Id</span><span class='op'>&lt;</span><span class='ident'>TagId</span><span class='op'>&gt;&gt;</span>,
+}</pre>
+
+<p>or
+<code>ignore { set: Vec&lt;SetterSelector&gt;, tags: Vec&lt;Id&lt;TagId&gt;&gt;, }</code></p>
+
+<h2 id='errors-4' class='section-header'><a href='#errors-4'>Errors</a></h2>
+<p>In case of syntax error, Error 400, accompanied with a
+somewhat human-readable JSON string detailing the error.</p>
+
+<h2 id='success-4' class='section-header'><a href='#success-4'>Success</a></h2>
+<p>A JSON representing a number.</p>
+</div><h3 id='tymethod.add_setter_tags' class='method stab '><code>fn <a href='#tymethod.add_setter_tags' class='fnname'>add_setter_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.SetterSelector.html' title='foxbox_taxonomy::selector::SetterSelector'>SetterSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h3><h3 id='tymethod.remove_getter_tags' class='method stab '><code>fn <a href='#tymethod.remove_getter_tags' class='fnname'>remove_getter_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.GetterSelector.html' title='foxbox_taxonomy::selector::GetterSelector'>GetterSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h3><div class='docblock'><p>Remove a set of tags from a set of channels.</p>
+
+<p>A call to <code>API::delete_{getter, setter}_tag(vec![req1, req2, ...], vec![tag1, ...])</code> will remove from all the channels matching <em>either</em> <code>req1</code> or
+<code>req2</code> or ... all of the tags <code>tag1</code>, ... and return the number of channels
+matching any of the selectors.</p>
+
+<p>Some of the channels may not be labelled with <code>tag1</code>, or <code>tag2</code>,
+... They will not change state. They are counted in the
+resulting <code>usize</code> nevertheless.</p>
+
+<p>Note that this call is <em>not live</em>. In other words, if channels
+are added after the call, they will not be affected.</p>
+
+<h1 id='rest-api-6' class='section-header'><a href='#rest-api-6'>REST API</a></h1>
+<p><code>DELETE /api/v1/channels/tag</code></p>
+
+<h2 id='requests-1' class='section-header'><a href='#requests-1'>Requests</a></h2>
+<p>Any JSON that can be deserialized to</p>
+
+<pre class='rust rust-example-rendered'>
+{
+  <span class='ident'>set</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>GetterSelector</span><span class='op'>&gt;</span>,
+  <span class='ident'>tags</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>Id</span><span class='op'>&lt;</span><span class='ident'>TagId</span><span class='op'>&gt;&gt;</span>,
+}</pre>
+
+<p>or
+<code>ignore { set: Vec&lt;SetterSelector&gt;, tags: Vec&lt;Id&lt;TagId&gt;&gt;, }</code></p>
+
+<h2 id='errors-5' class='section-header'><a href='#errors-5'>Errors</a></h2>
+<p>In case of syntax error, Error 400, accompanied with a
+somewhat human-readable JSON string detailing the error.</p>
+
+<h2 id='success-5' class='section-header'><a href='#success-5'>Success</a></h2>
+<p>A JSON representing a number.</p>
+</div><h3 id='tymethod.remove_setter_tags' class='method stab '><code>fn <a href='#tymethod.remove_setter_tags' class='fnname'>remove_setter_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.SetterSelector.html' title='foxbox_taxonomy::selector::SetterSelector'>SetterSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h3><h3 id='tymethod.fetch_values' class='method stab '><code>fn <a href='#tymethod.fetch_values' class='fnname'>fetch_values</a>(&amp;self, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.GetterSelector.html' title='foxbox_taxonomy::selector::GetterSelector'>GetterSelector</a>&gt;, user: <a class='enum' href='../../foxbox_taxonomy/api/enum.User.html' title='foxbox_taxonomy::api::User'>User</a>) -&gt; <a class='type' href='../../foxbox_taxonomy/util/type.ResultMap.html' title='foxbox_taxonomy::util::ResultMap'>ResultMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;, <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='../../foxbox_taxonomy/values/enum.Value.html' title='foxbox_taxonomy::values::Value'>Value</a>&gt;, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Read the latest value from a set of channels</p>
+
+<h1 id='rest-api-7' class='section-header'><a href='#rest-api-7'>REST API</a></h1>
+<p><code>GET /api/v1/channels/get</code></p>
+
+<p>This call supports one or more GetterSelector.</p>
+
+<pre class='rust rust-example-rendered'>
+
+
+<span class='comment'>// The following argument will fetch a value from to a single getter:</span>
+<span class='string'>r#&quot;{&quot;id&quot;: &quot;my-getter&quot;}&quot;#</span>;
+
+</pre>
+
+<h2 id='errors-6' class='section-header'><a href='#errors-6'>Errors</a></h2>
+<p>In case of syntax error, Error 400, accompanied with a
+somewhat human-readable JSON string detailing the error.</p>
+
+<h2 id='success-6' class='section-header'><a href='#success-6'>Success</a></h2>
+<p>The results, per getter.</p>
+</div><h3 id='tymethod.send_values' class='method stab '><code>fn <a href='#tymethod.send_values' class='fnname'>send_values</a>(&amp;self, <a class='type' href='../../foxbox_taxonomy/util/type.TargetMap.html' title='foxbox_taxonomy::util::TargetMap'>TargetMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.SetterSelector.html' title='foxbox_taxonomy::selector::SetterSelector'>SetterSelector</a>, <a class='enum' href='../../foxbox_taxonomy/values/enum.Value.html' title='foxbox_taxonomy::values::Value'>Value</a>&gt;, user: <a class='enum' href='../../foxbox_taxonomy/api/enum.User.html' title='foxbox_taxonomy::api::User'>User</a>) -&gt; <a class='type' href='../../foxbox_taxonomy/util/type.ResultMap.html' title='foxbox_taxonomy::util::ResultMap'>ResultMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Setter.html' title='foxbox_taxonomy::services::Setter'>Setter</a>&gt;, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Send a bunch of values to a set of channels.</p>
+
+<p>Sending values to several setters of the same service in a single call will generally
+be much faster than calling this method several times.</p>
+
+<h1 id='rest-api-8' class='section-header'><a href='#rest-api-8'>REST API</a></h1>
+<p><code>PUT /api/v1/channels/set</code></p>
+
+<h2 id='json-4' class='section-header'><a href='#json-4'>JSON</a></h2>
+<p>This call supports one or more objects with the following fields:
+- select (Service Selector | array of ServiceSelector) - the setters to which the value must be sent
+- value (Value) - the value to send</p>
+
+<pre class='rust rust-example-rendered'>
+
+
+<span class='comment'>// The following argument will send `On` to a single setter:</span>
+<span class='string'>r#&quot;{
+  &quot;select&quot;: {&quot;id&quot;: &quot;my-setter&quot;},
+  &quot;value&quot;: {&quot;OnOff&quot;: &quot;On&quot;}
+}&quot;#</span>;
+
+
+<span class='comment'>// The following argument will send `On` to two setters and `Unit` to everything</span>
+<span class='comment'>// that supports `Ready`.</span>
+<span class='string'>r#&quot;[{
+  &quot;select&quot;: [{&quot;id&quot;: &quot;my-setter 1&quot;}, {&quot;id&quot;: &quot;my-setter 2&quot;}],
+  &quot;value&quot;: {&quot;OnOff&quot;: &quot;On&quot;}
+}, {
+  &quot;select&quot;: {&quot;kind&quot;: &quot;Ready&quot;},
+  &quot;value&quot;: {&quot;Unit&quot;: null}
+}]&quot;#</span>;
+
+</pre>
+
+<h2 id='errors-7' class='section-header'><a href='#errors-7'>Errors</a></h2>
+<p>In case of syntax error, Error 400, accompanied with a
+somewhat human-readable JSON string detailing the error.</p>
+
+<h2 id='success-7' class='section-header'><a href='#success-7'>Success</a></h2>
+<p>The results, per setter.</p>
+</div><h3 id='tymethod.watch_values' class='method stab '><code>fn <a href='#tymethod.watch_values' class='fnname'>watch_values</a>(&amp;self, watch: <a class='type' href='../../foxbox_taxonomy/util/type.TargetMap.html' title='foxbox_taxonomy::util::TargetMap'>TargetMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.GetterSelector.html' title='foxbox_taxonomy::selector::GetterSelector'>GetterSelector</a>, <a class='enum' href='../../foxbox_taxonomy/util/enum.Exactly.html' title='foxbox_taxonomy::util::Exactly'>Exactly</a>&lt;<a class='enum' href='../../foxbox_taxonomy/values/enum.Range.html' title='foxbox_taxonomy::values::Range'>Range</a>&gt;&gt;, on_event: <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../transformable_channels/mpsc/trait.ExtSender.html' title='transformable_channels::mpsc::ExtSender'>ExtSender</a>&lt;<a class='enum' href='../../foxbox_taxonomy/api/enum.WatchEvent.html' title='foxbox_taxonomy::api::WatchEvent'>WatchEvent</a>&gt;&gt;) -&gt; Self::<a class='trait' href='../../foxbox_taxonomy/api/trait.API.html' title='foxbox_taxonomy::api::API'>WatchGuard</a></code></h3><div class='docblock'><p>Watch for changes from channels.</p>
+
+<p>This method registers a closure to watch over events on a set of channels. Argument <code>watch</code>
+specifies which channels to watch and which events are of interest.</p>
+
+<ul>
+<li><p>If argument <code>Exactly&lt;Range&gt;</code> is <code>Exactly::Exactly(range)</code>, the watch is interested in
+values coming from these channels, if they fall within <code>range</code>. This is the most common
+case. In this case, <code>on_event</code> receives <code>WatcherEvent::GetterAdded</code>,
+<code>WatcherEvent::GetterRemoved</code> and <code>WatcherEvent::Value</code>, whenever a new value is available
+in the range. Values that do not have the same type as <code>range</code> are dropped silently.</p></li>
+<li><p>If argument <code>Exactly&lt;Range&gt;</code> is <code>Exactly::Never</code>, the watch is not interested in the
+values coming from these channels, only in connection/disconnection events. Argument
+<code>on_event</code> receives <code>WatchEvent::GetterAdded</code> and <code>WatchEvent::GetterRemoved</code>.</p></li>
+<li><p>If the <code>Exactly&lt;Range&gt;</code> argument is <code>Exactly::Always</code>, the watch is interested in
+receiving <em>every single value coming from the channels</em>. This is very rarely a good idea.
+Many devices may reject such requests.</p></li>
+</ul>
+
+<p>The watcher is disconnected once the <code>WatchGuard</code> returned by this method is dropped.</p>
+
+<h1 id='websocket-api' class='section-header'><a href='#websocket-api'>WebSocket API</a></h1>
+<p><code>/api/v1/channels/watch</code></p>
+</div></div>
+        <h2 id='implementors'>Implementors</h2>
+        <ul class='item-list' id='implementors-list'>
+    <li><code>impl <a class='trait' href='../../foxbox_taxonomy/api/trait.API.html' title='foxbox_taxonomy::api::API'>API</a> for <a class='struct' href='../../foxbox_taxonomy/manager/struct.AdapterManager.html' title='foxbox_taxonomy::manager::AdapterManager'>AdapterManager</a></code></li>
+</ul><script type="text/javascript" async
+                              src="../../implementors/foxbox_taxonomy/api/trait.API.js">
+                      </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "foxbox_taxonomy";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

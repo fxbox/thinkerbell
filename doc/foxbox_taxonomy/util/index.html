@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `util` mod in crate `foxbox_taxonomy`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, util">
+
+    <title>foxbox_taxonomy::util - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>foxbox_taxonomy</a></p><script>window.sidebarCurrent = {name: 'util', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>foxbox_taxonomy</a>::<wbr><a class='mod' href=''>util</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-5413' class='srclink' href='../../src/foxbox_taxonomy/util.rs.html.html#1-383' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Various utilities</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.AdapterId.html'
+                               title='foxbox_taxonomy::util::AdapterId'>AdapterId</a></td>
+                        <td class='docblock short'>
+                             <p>A marker for Id.
+Only useful for writing <code>Id&lt;AdapterId&gt;</code>.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Id.html'
+                               title='foxbox_taxonomy::util::Id'>Id</a></td>
+                        <td class='docblock short'>
+                             <p>A unique id for values of a given kind.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.KindId.html'
+                               title='foxbox_taxonomy::util::KindId'>KindId</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.MimeTypeId.html'
+                               title='foxbox_taxonomy::util::MimeTypeId'>MimeTypeId</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Phantom.html'
+                               title='foxbox_taxonomy::util::Phantom'>Phantom</a></td>
+                        <td class='docblock short'>
+                             <p>A variant of <code>PhantomData</code> that supports [De]serialization</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.ServiceId.html'
+                               title='foxbox_taxonomy::util::ServiceId'>ServiceId</a></td>
+                        <td class='docblock short'>
+                             <p>A marker for Id.
+Only useful for writing <code>Id&lt;ServiceId&gt;</code>.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.TagId.html'
+                               title='foxbox_taxonomy::util::TagId'>TagId</a></td>
+                        <td class='docblock short'>
+                             <p>Only useful for writing <code>Id&lt;TagId&gt;</code>.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Targetted.html'
+                               title='foxbox_taxonomy::util::Targetted'>Targetted</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.TrivialEnumVisitor.html'
+                               title='foxbox_taxonomy::util::TrivialEnumVisitor'>TrivialEnumVisitor</a></td>
+                        <td class='docblock short'>
+                             <p>By default, the (de)serialization of trivial enums by Serde is surprising, e.g.
+in JSON,  <code>enum Foo {A, B, C}</code> will produce <code>{&quot;\&quot;A\&quot;: []&quot;}</code> for <code>A</code>, where <code>&quot;\&quot;A\&quot;&quot;</code>
+would be expected.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.VendorId.html'
+                               title='foxbox_taxonomy::util::VendorId'>VendorId</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.Exactly.html'
+                               title='foxbox_taxonomy::util::Exactly'>Exactly</a></td>
+                        <td class='docblock short'>
+                             <p>A marker for a request that a expects a specific value.</p>
+                        </td>
+                    </tr>
+                </table><h2 id='functions' class='section-header'><a href="#functions">Functions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='fn' href='fn.is_sync.html'
+                               title='foxbox_taxonomy::util::is_sync'>is_sync</a></td>
+                        <td class='docblock short'>
+                             <p>Helper function, to check that a type implements Sync.</p>
+                        </td>
+                    </tr>
+                </table><h2 id='types' class='section-header'><a href="#types">Type Definitions</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.ResultMap.html'
+                               title='foxbox_taxonomy::util::ResultMap'>ResultMap</a></td>
+                        <td class='docblock short'>
+                             <p>A bunch of results coming from different sources.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='type' href='type.TargetMap.html'
+                               title='foxbox_taxonomy::util::TargetMap'>TargetMap</a></td>
+                        <td class='docblock short'>
+                             <p>A bunch of instructions, going to different targets.</p>
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "foxbox_taxonomy";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

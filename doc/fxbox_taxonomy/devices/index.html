@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `devices` mod in crate `fxbox_taxonomy`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, devices">
+
+    <title>fxbox_taxonomy::devices - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>fxbox_taxonomy</a></p><script>window.sidebarCurrent = {name: 'devices', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>fxbox_taxonomy</a>::<wbr><a class='mod' href=''>devices</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-7' class='srclink' href='../../src/fxbox_taxonomy/devices.rs.html#1-255' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Metadata on devices
+This module defines the metadata on devices and services.</p>
+
+<p>Note that all the data structures in this module represent
+snapshots of subsets of the devices available. None of these data
+structures are live, so there is always the possibility that
+devices may have been added or removed from the FoxBox by the time
+these data structures are read.</p>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Channel.html'
+                               title='fxbox_taxonomy::devices::Channel'>Channel</a></td>
+                        <td class='docblock short'>
+                             <p>An service represents a single place where data can enter or
+leave a device. Note that services support either a single kind
+of input or a single kind of output. Devices that support both
+inputs or outputs, or several kinds of inputs, or several kinds of
+outputs, are represented as nodes containing several services.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Get.html'
+                               title='fxbox_taxonomy::devices::Get'>Get</a></td>
+                        <td class='docblock short'>
+                             <p>An input operation available on an service.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Node.html'
+                               title='fxbox_taxonomy::devices::Node'>Node</a></td>
+                        <td class='docblock short'>
+                             <p>Metadata on a node. A node is a device or collection of devices
+that may offer services. The FoxBox itself a node offering
+services such as a clock, communication with the user through her
+smart devices, etc.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.NodeId.html'
+                               title='fxbox_taxonomy::devices::NodeId'>NodeId</a></td>
+                        <td class='docblock short'>
+                             <p>A marker for Id.
+Only useful for writing <code>Id&lt;NodeId&gt;</code>.</p>
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Set.html'
+                               title='fxbox_taxonomy::devices::Set'>Set</a></td>
+                        <td class='docblock short'>
+                             <p>An output operation available on an service.</p>
+                        </td>
+                    </tr>
+                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.ChannelKind.html'
+                               title='fxbox_taxonomy::devices::ChannelKind'>ChannelKind</a></td>
+                        <td class='docblock short'>
+                             <p>The kind of the service, i.e. a strongly-typed description of
+<em>what</em> the service can do. Used both for locating services
+(e.g. &quot;I need a clock&quot; or &quot;I need something that can provide
+pictures&quot;) and for determining the data structure that these
+services can provide or consume.</p>
+                        </td>
+                    </tr>
+                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='trait' href='trait.IOMechanism.html'
+                               title='fxbox_taxonomy::devices::IOMechanism'>IOMechanism</a></td>
+                        <td class='docblock short'>
+                             <p>A mechanism used for communicating between the application and the
+service.</p>
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "fxbox_taxonomy";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

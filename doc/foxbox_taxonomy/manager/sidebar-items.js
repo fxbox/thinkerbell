@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["AdapterManager","An implementation of the AdapterManager."],["WatchGuard","A data structure that causes cancellation of a watch when dropped."]]});

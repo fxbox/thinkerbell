@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `compile` mod in crate `foxbox_thinkerbell`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, compile">
+
+    <title>foxbox_thinkerbell::compile - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>foxbox_thinkerbell</a></p><script>window.sidebarCurrent = {name: 'compile', ty: 'mod', relpath: '../'};</script><script defer src="../sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content mod">
+<h1 class='fqn'><span class='in-band'>Module <a href='../index.html'>foxbox_thinkerbell</a>::<wbr><a class='mod' href=''>compile</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-112' class='srclink' href='../../src/foxbox_thinkerbell/src/compile.rs.html.html#1-194' title='goto source code'>[src]</a></span></h1>
+<div class='docblock'><p>Compiling an AST into something runnable.
+A script compiler</p>
+
+<p>This compiler take untrusted code (<code>Script&lt;UncheckedCtx&gt;</code>) and
+performs the following transformations and checks:</p>
+
+<ul>
+<li>Ensure that the <code>Script</code> has at least one <code>Rule</code>.</li>
+<li>Ensure that each <code>Rule</code> has at least one <code>Match</code>.</li>
+<li>Ensure that each <code>Rule</code> has at least one <code>Statement</code>.</li>
+<li>Ensure that each <code>Match</code> has at least one <code>source</code>.</li>
+<li>Ensure that each <code>Statement</code> has at least one <code>destination</code>.</li>
+<li>Ensure that in each <code>Match</code>, the type of <code>range</code> matches
+the <code>kind</code>.</li>
+<li>Ensure that in each <code>Statement</code>, the type of <code>value</code> matches
+the <code>kind</code>.</li>
+<li>Transform each <code>Match</code> to make sure that the kind of the
+<code>source</code> matches the <code>kind</code>, even if devices change.</li>
+<li>Transform each <code>Statement</code> to make sure that the kind of the
+<code>destination</code> matches the <code>kind</code>, even if devices change.</li>
+</ul>
+</div><h2 id='structs' class='section-header'><a href="#structs">Structs</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.CompiledCtx.html'
+                               title='foxbox_thinkerbell::compile::CompiledCtx'>CompiledCtx</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='struct' href='struct.Compiler.html'
+                               title='foxbox_thinkerbell::compile::Compiler'>Compiler</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                </table><h2 id='enums' class='section-header'><a href="#enums">Enums</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.Error.html'
+                               title='foxbox_thinkerbell::compile::Error'>Error</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.SourceError.html'
+                               title='foxbox_thinkerbell::compile::SourceError'>SourceError</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                
+                    <tr class=' module-item'>
+                        <td><a class='enum' href='enum.TypeError.html'
+                               title='foxbox_thinkerbell::compile::TypeError'>TypeError</a></td>
+                        <td class='docblock short'>
+                             
+                        </td>
+                    </tr>
+                </table><h2 id='traits' class='section-header'><a href="#traits">Traits</a></h2>
+<table>
+                    <tr class=' module-item'>
+                        <td><a class='trait' href='trait.ExecutableDevEnv.html'
+                               title='foxbox_thinkerbell::compile::ExecutableDevEnv'>ExecutableDevEnv</a></td>
+                        <td class='docblock short'>
+                             <p>The environment in which the code is meant to be executed.  This
+can typically be instantiated either with actual bindings to
+devices, or with a unit-testing framework. // FIXME: Move this to run.rs</p>
+                        </td>
+                    </tr>
+                </table></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "foxbox_thinkerbell";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

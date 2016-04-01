@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["InsertInMap","Insert a (key, value) pair in a map. However, if the object is dropped before method `commit()` is called, the insertion is cancelled."]]});

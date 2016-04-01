@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["MultiPart","An imnplementation of `MultiPart` that stores everything in a HashMap and returns JSON objects `\"{part: i}\"`, where `i` is the (integer) key in the HashMap."]],"trait":[["BinaryParts","A store to put binary parts."],["ToJSON",""]]});

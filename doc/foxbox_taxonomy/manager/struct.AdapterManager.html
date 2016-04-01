@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `AdapterManager` struct in crate `foxbox_taxonomy`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, AdapterManager">
+
+    <title>foxbox_taxonomy::manager::AdapterManager - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>foxbox_taxonomy</a>::<wbr><a href='index.html'>manager</a></p><script>window.sidebarCurrent = {name: 'AdapterManager', ty: 'struct', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content struct">
+<h1 class='fqn'><span class='in-band'>Struct <a href='../index.html'>foxbox_taxonomy</a>::<wbr><a href='index.html'>manager</a>::<wbr><a class='struct' href=''>AdapterManager</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-6647' class='srclink' href='../../src/foxbox_taxonomy/manager.rs.html.html#28-38' title='goto source code'>[src]</a></span></h1>
+<pre class='rust struct'>pub struct AdapterManager {
+    // some fields omitted
+}</pre><div class='docblock'><p>An implementation of the AdapterManager.</p>
+
+<p>This implementation is <code>Sync</code> and supports any number of concurrent
+readers <em>or</em> a single writer.</p>
+</div><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='struct' href='../../foxbox_taxonomy/manager/struct.AdapterManager.html' title='foxbox_taxonomy::manager::AdapterManager'>AdapterManager</a></code></h3><div class='impl-items'><h4 id='method.new' class='method'><code>fn <a href='#method.new' class='fnname'>new</a>() -&gt; Self</code></h4>
+<div class='docblock'><p>Create an empty AdapterManager.
+This function does not attempt to load any state from the disk.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/default/trait.Default.html' title='core::default::Default'>Default</a> for <a class='struct' href='../../foxbox_taxonomy/manager/struct.AdapterManager.html' title='foxbox_taxonomy::manager::AdapterManager'>AdapterManager</a></code></h3><div class='impl-items'><h4 id='method.default' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/default/trait.Default.html#method.default' class='fnname'>default</a>() -&gt; Self</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='../../foxbox_taxonomy/adapter/trait.AdapterManagerHandle.html' title='foxbox_taxonomy::adapter::AdapterManagerHandle'>AdapterManagerHandle</a> for <a class='struct' href='../../foxbox_taxonomy/manager/struct.AdapterManager.html' title='foxbox_taxonomy::manager::AdapterManager'>AdapterManager</a></code></h3><div class='impl-items'><h4 id='method.add_adapter' class='method'><code>fn <a href='../../foxbox_taxonomy/adapter/trait.AdapterManagerHandle.html#method.add_adapter' class='fnname'>add_adapter</a>(&amp;self, adapter: <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/arc/struct.Arc.html' title='alloc::arc::Arc'>Arc</a>&lt;<a class='trait' href='../../foxbox_taxonomy/adapter/trait.Adapter.html' title='foxbox_taxonomy::adapter::Adapter'>Adapter</a>&gt;) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;</code></h4>
+<h4 id='method.remove_adapter' class='method'><code>fn <a href='../../foxbox_taxonomy/adapter/trait.AdapterManagerHandle.html#method.remove_adapter' class='fnname'>remove_adapter</a>(&amp;self, id: &amp;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.AdapterId.html' title='foxbox_taxonomy::util::AdapterId'>AdapterId</a>&gt;) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;</code></h4>
+<h4 id='method.add_service' class='method'><code>fn <a href='../../foxbox_taxonomy/adapter/trait.AdapterManagerHandle.html#method.add_service' class='fnname'>add_service</a>(&amp;self, service: <a class='struct' href='../../foxbox_taxonomy/services/struct.Service.html' title='foxbox_taxonomy::services::Service'>Service</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;</code></h4>
+<h4 id='method.remove_service' class='method'><code>fn <a href='../../foxbox_taxonomy/adapter/trait.AdapterManagerHandle.html#method.remove_service' class='fnname'>remove_service</a>(&amp;self, id: &amp;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.ServiceId.html' title='foxbox_taxonomy::util::ServiceId'>ServiceId</a>&gt;) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;</code></h4>
+<h4 id='method.add_getter' class='method'><code>fn <a href='../../foxbox_taxonomy/adapter/trait.AdapterManagerHandle.html#method.add_getter' class='fnname'>add_getter</a>(&amp;self, getter: <a class='struct' href='../../foxbox_taxonomy/services/struct.Channel.html' title='foxbox_taxonomy::services::Channel'>Channel</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;</code></h4>
+<h4 id='method.remove_getter' class='method'><code>fn <a href='../../foxbox_taxonomy/adapter/trait.AdapterManagerHandle.html#method.remove_getter' class='fnname'>remove_getter</a>(&amp;self, id: &amp;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;</code></h4>
+<h4 id='method.add_setter' class='method'><code>fn <a href='../../foxbox_taxonomy/adapter/trait.AdapterManagerHandle.html#method.add_setter' class='fnname'>add_setter</a>(&amp;self, setter: <a class='struct' href='../../foxbox_taxonomy/services/struct.Channel.html' title='foxbox_taxonomy::services::Channel'>Channel</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Setter.html' title='foxbox_taxonomy::services::Setter'>Setter</a>&gt;) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;</code></h4>
+<h4 id='method.remove_setter' class='method'><code>fn <a href='../../foxbox_taxonomy/adapter/trait.AdapterManagerHandle.html#method.remove_setter' class='fnname'>remove_setter</a>(&amp;self, id: &amp;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Setter.html' title='foxbox_taxonomy::services::Setter'>Setter</a>&gt;) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='../../foxbox_taxonomy/api/trait.API.html' title='foxbox_taxonomy::api::API'>API</a> for <a class='struct' href='../../foxbox_taxonomy/manager/struct.AdapterManager.html' title='foxbox_taxonomy::manager::AdapterManager'>AdapterManager</a></code></h3><div class='docblock'><p>A handle to the public API.</p>
+</div><div class='impl-items'><h4 id='method.get_services' class='method'><code>fn <a href='../../foxbox_taxonomy/api/trait.API.html#method.get_services' class='fnname'>get_services</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.ServiceSelector.html' title='foxbox_taxonomy::selector::ServiceSelector'>ServiceSelector</a>&gt;) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Service.html' title='foxbox_taxonomy::services::Service'>Service</a>&gt;</code></h4>
+<h4 id='method.add_service_tags' class='method'><code>fn <a href='../../foxbox_taxonomy/api/trait.API.html#method.add_service_tags' class='fnname'>add_service_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.ServiceSelector.html' title='foxbox_taxonomy::selector::ServiceSelector'>ServiceSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
+<h4 id='method.remove_service_tags' class='method'><code>fn <a href='../../foxbox_taxonomy/api/trait.API.html#method.remove_service_tags' class='fnname'>remove_service_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.ServiceSelector.html' title='foxbox_taxonomy::selector::ServiceSelector'>ServiceSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
+<h4 id='method.get_getter_channels' class='method'><code>fn <a href='../../foxbox_taxonomy/api/trait.API.html#method.get_getter_channels' class='fnname'>get_getter_channels</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.GetterSelector.html' title='foxbox_taxonomy::selector::GetterSelector'>GetterSelector</a>&gt;) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Channel.html' title='foxbox_taxonomy::services::Channel'>Channel</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;&gt;</code></h4>
+<h4 id='method.get_setter_channels' class='method'><code>fn <a href='../../foxbox_taxonomy/api/trait.API.html#method.get_setter_channels' class='fnname'>get_setter_channels</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.SetterSelector.html' title='foxbox_taxonomy::selector::SetterSelector'>SetterSelector</a>&gt;) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Channel.html' title='foxbox_taxonomy::services::Channel'>Channel</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Setter.html' title='foxbox_taxonomy::services::Setter'>Setter</a>&gt;&gt;</code></h4>
+<h4 id='method.add_getter_tags' class='method'><code>fn <a href='../../foxbox_taxonomy/api/trait.API.html#method.add_getter_tags' class='fnname'>add_getter_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.GetterSelector.html' title='foxbox_taxonomy::selector::GetterSelector'>GetterSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
+<h4 id='method.add_setter_tags' class='method'><code>fn <a href='../../foxbox_taxonomy/api/trait.API.html#method.add_setter_tags' class='fnname'>add_setter_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.SetterSelector.html' title='foxbox_taxonomy::selector::SetterSelector'>SetterSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
+<h4 id='method.remove_getter_tags' class='method'><code>fn <a href='../../foxbox_taxonomy/api/trait.API.html#method.remove_getter_tags' class='fnname'>remove_getter_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.GetterSelector.html' title='foxbox_taxonomy::selector::GetterSelector'>GetterSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
+<h4 id='method.remove_setter_tags' class='method'><code>fn <a href='../../foxbox_taxonomy/api/trait.API.html#method.remove_setter_tags' class='fnname'>remove_setter_tags</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.SetterSelector.html' title='foxbox_taxonomy::selector::SetterSelector'>SetterSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.TagId.html' title='foxbox_taxonomy::util::TagId'>TagId</a>&gt;&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h4>
+<h4 id='method.fetch_values' class='method'><code>fn <a href='../../foxbox_taxonomy/api/trait.API.html#method.fetch_values' class='fnname'>fetch_values</a>(&amp;self, selectors: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.GetterSelector.html' title='foxbox_taxonomy::selector::GetterSelector'>GetterSelector</a>&gt;, user: <a class='enum' href='../../foxbox_taxonomy/api/enum.User.html' title='foxbox_taxonomy::api::User'>User</a>) -&gt; <a class='type' href='../../foxbox_taxonomy/adapter/type.ResultMap.html' title='foxbox_taxonomy::adapter::ResultMap'>ResultMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;, <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='../../foxbox_taxonomy/values/enum.Value.html' title='foxbox_taxonomy::values::Value'>Value</a>&gt;, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;</code></h4>
+<h4 id='method.send_values' class='method'><code>fn <a href='../../foxbox_taxonomy/api/trait.API.html#method.send_values' class='fnname'>send_values</a>(&amp;self, keyvalues: <a class='type' href='../../foxbox_taxonomy/util/type.TargetMap.html' title='foxbox_taxonomy::util::TargetMap'>TargetMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.SetterSelector.html' title='foxbox_taxonomy::selector::SetterSelector'>SetterSelector</a>, <a class='enum' href='../../foxbox_taxonomy/values/enum.Value.html' title='foxbox_taxonomy::values::Value'>Value</a>&gt;, user: <a class='enum' href='../../foxbox_taxonomy/api/enum.User.html' title='foxbox_taxonomy::api::User'>User</a>) -&gt; <a class='type' href='../../foxbox_taxonomy/adapter/type.ResultMap.html' title='foxbox_taxonomy::adapter::ResultMap'>ResultMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Setter.html' title='foxbox_taxonomy::services::Setter'>Setter</a>&gt;, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;</code></h4>
+<h4 id='method.watch_values' class='method'><code>fn <a href='../../foxbox_taxonomy/api/trait.API.html#method.watch_values' class='fnname'>watch_values</a>(&amp;self, watch: <a class='type' href='../../foxbox_taxonomy/util/type.TargetMap.html' title='foxbox_taxonomy::util::TargetMap'>TargetMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/selector/struct.GetterSelector.html' title='foxbox_taxonomy::selector::GetterSelector'>GetterSelector</a>, <a class='enum' href='../../foxbox_taxonomy/util/enum.Exactly.html' title='foxbox_taxonomy::util::Exactly'>Exactly</a>&lt;<a class='enum' href='../../foxbox_taxonomy/values/enum.Range.html' title='foxbox_taxonomy::values::Range'>Range</a>&gt;&gt;, on_event: <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../transformable_channels/mpsc/trait.ExtSender.html' title='transformable_channels::mpsc::ExtSender'>ExtSender</a>&lt;<a class='enum' href='../../foxbox_taxonomy/api/enum.WatchEvent.html' title='foxbox_taxonomy::api::WatchEvent'>WatchEvent</a>&gt;&gt;) -&gt; Self::<a class='trait' href='../../foxbox_taxonomy/api/trait.API.html' title='foxbox_taxonomy::api::API'>WatchGuard</a></code></h4>
+<h4 id='associatedtype.WatchGuard' class='type'><code>type WatchGuard = <a class='struct' href='../../foxbox_taxonomy/manager/struct.WatchGuard.html' title='foxbox_taxonomy::manager::WatchGuard'>WatchGuard</a></code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "foxbox_taxonomy";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

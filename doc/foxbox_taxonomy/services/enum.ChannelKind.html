@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `ChannelKind` enum in crate `foxbox_taxonomy`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, ChannelKind">
+
+    <title>foxbox_taxonomy::services::ChannelKind - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>foxbox_taxonomy</a>::<wbr><a href='index.html'>services</a></p><script>window.sidebarCurrent = {name: 'ChannelKind', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content enum">
+<h1 class='fqn'><span class='in-band'>Enum <a href='../index.html'>foxbox_taxonomy</a>::<wbr><a href='index.html'>services</a>::<wbr><a class='enum' href=''>ChannelKind</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-222' class='srclink' href='../../src/foxbox_taxonomy/services.rs.html.html#140-351' title='goto source code'>[src]</a></span></h1>
+<pre class='rust enum'>pub enum ChannelKind {
+    Ready,
+    OnOff,
+    OpenClosed,
+    CurrentTime,
+    CurrentTimeOfDay,
+    RemainingTime,
+    OvenTemperature,
+    AddThinkerbellRule,
+    RemoveThinkerbellRule,
+    ThinkerbellRuleSource,
+    TakeSnapshot,
+    Extension {
+        vendor: <a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.VendorId.html' title='foxbox_taxonomy::util::VendorId'>VendorId</a>&gt;,
+        adapter: <a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.AdapterId.html' title='foxbox_taxonomy::util::AdapterId'>AdapterId</a>&gt;,
+        kind: <a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.KindId.html' title='foxbox_taxonomy::util::KindId'>KindId</a>&gt;,
+        typ: <a class='enum' href='../../foxbox_taxonomy/values/enum.Type.html' title='foxbox_taxonomy::values::Type'>Type</a>,
+    },
+}</pre><div class='docblock'><p>The kind of the channel, i.e. a strongly-typed description of
+<em>what</em> the channel can do. Used both for locating channels
+(e.g. &quot;I need a clock&quot; or &quot;I need something that can provide
+pictures&quot;) and for determining the data structure that these
+channel can provide or consume.</p>
+
+<p>A number of channel kinds are standardized, and provided as a set
+of strongly-typed enum constructors. It is clear, however, that
+many devices will offer channels that cannot be described by
+pre-existing constructors. For this purpose, this enumeration
+offers a constructor <code>Extension</code>, designed to describe novel
+channels.</p>
+
+<h1 id='json' class='section-header'><a href='#json'>JSON</a></h1>
+<p>With the exception of the <code>Extension</code> kind, of all variants are
+represented by a string with their name, e.g.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>services</span>::<span class='op'>*</span>;
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>parse</span>::<span class='op'>*</span>;
+
+<span class='kw'>let</span> <span class='ident'>parsed</span> <span class='op'>=</span> <span class='ident'>ChannelKind</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;\&quot;Ready\&quot;&quot;</span>).<span class='ident'>unwrap</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>parsed</span>, <span class='ident'>ChannelKind</span>::<span class='ident'>Ready</span>);</pre>
+</div><h2 class='variants'>Variants</h2>
+<table class='variants_table'><tr><td id='variant.Ready'><code>Ready</code></td><td><div class='docblock'><p>The service is ready. Used for instance once a countdown has
+reached completion.</p>
+
+<h1 id='json-1' class='section-header'><a href='#json-1'>JSON</a></h1>
+<p>This kind is represented by string &quot;Ready&quot;.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>services</span>::<span class='op'>*</span>;
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>parse</span>::<span class='op'>*</span>;
+
+<span class='kw'>let</span> <span class='ident'>parsed</span> <span class='op'>=</span> <span class='ident'>ChannelKind</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;\&quot;Ready\&quot;&quot;</span>).<span class='ident'>unwrap</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>parsed</span>, <span class='ident'>ChannelKind</span>::<span class='ident'>Ready</span>);</pre>
+</div></td><td></td></tr><tr><td id='variant.OnOff'><code>OnOff</code></td><td><div class='docblock'><p>The service is used to detect or decide whether some device
+is on or off.</p>
+
+<h1 id='json-2' class='section-header'><a href='#json-2'>JSON</a></h1>
+<p>This kind is represented by string &quot;OnOff&quot;.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>services</span>::<span class='op'>*</span>;
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>parse</span>::<span class='op'>*</span>;
+
+<span class='kw'>let</span> <span class='ident'>parsed</span> <span class='op'>=</span> <span class='ident'>ChannelKind</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;\&quot;OnOff\&quot;&quot;</span>).<span class='ident'>unwrap</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>parsed</span>, <span class='ident'>ChannelKind</span>::<span class='ident'>OnOff</span>);</pre>
+</div></td><td></td></tr><tr><td id='variant.OpenClosed'><code>OpenClosed</code></td><td><div class='docblock'><p>The service is used to detect or decide whether some device
+is open or closed.</p>
+
+<h1 id='json-3' class='section-header'><a href='#json-3'>JSON</a></h1>
+<p>This kind is represented by string &quot;OpenClosed&quot;.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>services</span>::<span class='op'>*</span>;
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>parse</span>::<span class='op'>*</span>;
+
+<span class='kw'>let</span> <span class='ident'>parsed</span> <span class='op'>=</span> <span class='ident'>ChannelKind</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;\&quot;OpenClosed\&quot;&quot;</span>).<span class='ident'>unwrap</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>parsed</span>, <span class='ident'>ChannelKind</span>::<span class='ident'>OpenClosed</span>);</pre>
+</div></td><td></td></tr><tr><td id='variant.CurrentTime'><code>CurrentTime</code></td><td><div class='docblock'><p>The service is used to read or set the current absolute time.
+Used for instance to wait until a specific time and day before
+triggering an action, or to set the appropriate time on a new
+device.</p>
+
+<h1 id='json-4' class='section-header'><a href='#json-4'>JSON</a></h1>
+<p>This kind is represented by string &quot;CurrentTime&quot;.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>services</span>::<span class='op'>*</span>;
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>parse</span>::<span class='op'>*</span>;
+
+<span class='kw'>let</span> <span class='ident'>parsed</span> <span class='op'>=</span> <span class='ident'>ChannelKind</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;\&quot;CurrentTime\&quot;&quot;</span>).<span class='ident'>unwrap</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>parsed</span>, <span class='ident'>ChannelKind</span>::<span class='ident'>CurrentTime</span>);</pre>
+</div></td><td></td></tr><tr><td id='variant.CurrentTimeOfDay'><code>CurrentTimeOfDay</code></td><td><div class='docblock'><p>The service is used to read or set the current time of day.
+Used for instance to trigger an action at a specific hour
+every day.</p>
+
+<h1 id='json-5' class='section-header'><a href='#json-5'>JSON</a></h1>
+<p>This kind is represented by string &quot;CurrentTimeOfDay&quot;.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>services</span>::<span class='op'>*</span>;
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>parse</span>::<span class='op'>*</span>;
+
+<span class='kw'>let</span> <span class='ident'>parsed</span> <span class='op'>=</span> <span class='ident'>ChannelKind</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;\&quot;CurrentTimeOfDay\&quot;&quot;</span>).<span class='ident'>unwrap</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>parsed</span>, <span class='ident'>ChannelKind</span>::<span class='ident'>CurrentTimeOfDay</span>);</pre>
+</div></td><td></td></tr><tr><td id='variant.RemainingTime'><code>RemainingTime</code></td><td><div class='docblock'><p>The service is part of a countdown. This is the time
+remaining until the countdown is elapsed.</p>
+
+<h1 id='json-6' class='section-header'><a href='#json-6'>JSON</a></h1>
+<p>This kind is represented by string &quot;RemainingTime&quot;.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>services</span>::<span class='op'>*</span>;
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>parse</span>::<span class='op'>*</span>;
+
+<span class='kw'>let</span> <span class='ident'>parsed</span> <span class='op'>=</span> <span class='ident'>ChannelKind</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;\&quot;RemainingTime\&quot;&quot;</span>).<span class='ident'>unwrap</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>parsed</span>, <span class='ident'>ChannelKind</span>::<span class='ident'>RemainingTime</span>);</pre>
+</div></td><td></td></tr><tr><td id='variant.OvenTemperature'><code>OvenTemperature</code></td><td><div class='docblock'>
+<h1 id='json-7' class='section-header'><a href='#json-7'>JSON</a></h1>
+<p>This kind is represented by string &quot;OvenTemperature&quot;.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>services</span>::<span class='op'>*</span>;
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>parse</span>::<span class='op'>*</span>;
+
+<span class='kw'>let</span> <span class='ident'>parsed</span> <span class='op'>=</span> <span class='ident'>ChannelKind</span>::<span class='ident'>from_str</span>(<span class='string'>&quot;\&quot;OvenTemperature\&quot;&quot;</span>).<span class='ident'>unwrap</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>parsed</span>, <span class='ident'>ChannelKind</span>::<span class='ident'>OvenTemperature</span>);</pre>
+</div></td><td></td></tr><tr><td id='variant.AddThinkerbellRule'><code>AddThinkerbellRule</code></td><td></td><td></td></tr><tr><td id='variant.RemoveThinkerbellRule'><code>RemoveThinkerbellRule</code></td><td></td><td></td></tr><tr><td id='variant.ThinkerbellRuleSource'><code>ThinkerbellRuleSource</code></td><td></td><td></td></tr><tr><td id='variant.TakeSnapshot'><code>TakeSnapshot</code></td><td><div class='docblock'><p>Capture a new snapshot.</p>
+
+<h1 id='json-8' class='section-header'><a href='#json-8'>JSON</a></h1>
+<p>This kind is represented by string &quot;TakeSnapshot&quot;.</p>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>services</span>::<span class='op'>*</span>;
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>parse</span>::<span class='op'>*</span>;
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>serialize</span>::<span class='op'>*</span>;
+
+<span class='kw'>let</span> <span class='ident'>source</span> <span class='op'>=</span> <span class='string'>r#&quot;&quot;TakeSnapshot&quot;&quot;#</span>;
+
+<span class='kw'>let</span> <span class='ident'>parsed</span> <span class='op'>=</span> <span class='ident'>ChannelKind</span>::<span class='ident'>from_str</span>(<span class='ident'>source</span>).<span class='ident'>unwrap</span>();
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>parsed</span>, <span class='ident'>ChannelKind</span>::<span class='ident'>TakeSnapshot</span>);
+
+<span class='kw'>let</span> <span class='ident'>serialized</span> <span class='op'>=</span> <span class='ident'>parsed</span>.<span class='ident'>to_json</span>(<span class='kw-2'>&amp;</span><span class='kw-2'>mut</span> <span class='ident'>MultiPart</span>::<span class='ident'>new</span>());
+<span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>serialized</span>.<span class='ident'>as_string</span>().<span class='ident'>unwrap</span>(), <span class='string'>&quot;TakeSnapshot&quot;</span>);</pre>
+</div></td><td></td></tr><tr><td id='variant.Extension'><code>Extension</code></td><td><div class='docblock'><p>An operation of a kind that has not been standardized yet.</p>
+
+<h1 id='json-9' class='section-header'><a href='#json-9'>JSON</a></h1>
+<p>This kind is represented by an object with the following fields:</p>
+
+<ul>
+<li>string <code>vendor</code></li>
+<li>string <code>adapter</code></li>
+<li>string <code>kind</code></li>
+<li>string <code>type</code> (see Type)</li>
+</ul>
+
+<pre class='rust rust-example-rendered'>
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>services</span>::<span class='op'>*</span>;
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>parse</span>::<span class='op'>*</span>;
+<span class='kw'>use</span> <span class='ident'>foxbox_taxonomy</span>::<span class='ident'>values</span>::<span class='op'>*</span>;
+
+<span class='kw'>let</span> <span class='ident'>source</span> <span class='op'>=</span> <span class='string'>&quot;{
+  \&quot;vendor\&quot;: \&quot;mozilla.org\&quot;,
+  \&quot;adapter\&quot;: \&quot;foxlink@mozilla.org\&quot;,
+  \&quot;kind\&quot;: \&quot;GroundHumidity\&quot;,
+  \&quot;type\&quot;: \&quot;ExtNumeric\&quot;
+}&quot;</span>;
+
+<span class='kw'>let</span> <span class='ident'>parsed</span> <span class='op'>=</span> <span class='ident'>ChannelKind</span>::<span class='ident'>from_str</span>(<span class='ident'>source</span>).<span class='ident'>unwrap</span>();
+
+<span class='kw'>if</span> <span class='kw'>let</span> <span class='ident'>ChannelKind</span>::<span class='ident'>Extension</span> { <span class='ident'>vendor</span>, <span class='ident'>adapter</span>, <span class='ident'>kind</span>, <span class='ident'>typ</span> } <span class='op'>=</span> <span class='ident'>parsed</span> {
+  <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>vendor</span>.<span class='ident'>to_string</span>(), <span class='string'>&quot;mozilla.org&quot;</span>);
+  <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>adapter</span>.<span class='ident'>to_string</span>(), <span class='string'>&quot;foxlink@mozilla.org&quot;</span>);
+  <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>kind</span>.<span class='ident'>to_string</span>(), <span class='string'>&quot;GroundHumidity&quot;</span>);
+  <span class='macro'>assert_eq</span><span class='macro'>!</span>(<span class='ident'>typ</span>, <span class='ident'>Type</span>::<span class='ident'>ExtNumeric</span>);
+} <span class='kw'>else</span> {
+  <span class='macro'>panic</span><span class='macro'>!</span>()
+}
+</pre>
+</div><h3 class='fields'>Fields</h3>
+
+                                  <table><tr><td id='variant.Extension.field.vendor'><code>vendor</code></td><td><div class='docblock'><p>The vendor. Used for namespacing purposes, to avoid
+confusing two incompatible extensions with similar
+names. For instance, &quot;<a href="mailto:foxlink@mozilla.com">foxlink@mozilla.com</a>&quot;.</p>
+</div></td></tr><tr><td id='variant.Extension.field.adapter'><code>adapter</code></td><td><div class='docblock'><p>Identification of the adapter introducing this operation.
+Designed to aid with tracing and debugging.</p>
+</div></td></tr><tr><td id='variant.Extension.field.kind'><code>kind</code></td><td><div class='docblock'><p>A string describing the nature of the value, designed to
+let applications discover the devices.</p>
+
+<p>Examples: <code>&quot;GroundHumidity&quot;</code>.</p>
+</div></td></tr><tr><td id='variant.Extension.field.typ'><code>typ</code></td><td><div class='docblock'><p>The data type of the value.</p>
+</div></td></tr></table></td><td></td></tr></table><h2 id='methods'>Methods</h2><h3 class='impl'><code>impl <a class='enum' href='../../foxbox_taxonomy/services/enum.ChannelKind.html' title='foxbox_taxonomy::services::ChannelKind'>ChannelKind</a></code></h3><div class='impl-items'><h4 id='method.get_type' class='method'><code>fn <a href='#method.get_type' class='fnname'>get_type</a>(&amp;self) -&gt; <a class='enum' href='../../foxbox_taxonomy/values/enum.Type.html' title='foxbox_taxonomy::values::Type'>Type</a></code></h4>
+<div class='docblock'><p>Get the type of values used to communicate with this service.</p>
+</div></div><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../serde/de/trait.Deserialize.html' title='serde::de::Deserialize'>Deserialize</a> for <a class='enum' href='../../foxbox_taxonomy/services/enum.ChannelKind.html' title='foxbox_taxonomy::services::ChannelKind'>ChannelKind</a></code></h3><div class='impl-items'><h4 id='method.deserialize' class='method'><code>fn <a href='../../serde/de/trait.Deserialize.html#method.deserialize' class='fnname'>deserialize</a>&lt;__D&gt;(deserializer: &amp;mut __D) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='enum' href='../../foxbox_taxonomy/services/enum.ChannelKind.html' title='foxbox_taxonomy::services::ChannelKind'>ChannelKind</a>, __D::Error&gt; <span class='where'>where __D: <a class='trait' href='../../serde/de/trait.Deserializer.html' title='serde::de::Deserializer'>Deserializer</a></span></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='../../serde/ser/trait.Serialize.html' title='serde::ser::Serialize'>Serialize</a> for <a class='enum' href='../../foxbox_taxonomy/services/enum.ChannelKind.html' title='foxbox_taxonomy::services::ChannelKind'>ChannelKind</a></code></h3><div class='impl-items'><h4 id='method.serialize' class='method'><code>fn <a href='../../serde/ser/trait.Serialize.html#method.serialize' class='fnname'>serialize</a>&lt;__S&gt;(&amp;self, serializer: &amp;mut __S) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, __S::Error&gt; <span class='where'>where __S: <a class='trait' href='../../serde/ser/trait.Serializer.html' title='serde::ser::Serializer'>Serializer</a></span></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='../../foxbox_taxonomy/parse/trait.Parser.html' title='foxbox_taxonomy::parse::Parser'>Parser</a>&lt;<a class='enum' href='../../foxbox_taxonomy/services/enum.ChannelKind.html' title='foxbox_taxonomy::services::ChannelKind'>ChannelKind</a>&gt; for <a class='enum' href='../../foxbox_taxonomy/services/enum.ChannelKind.html' title='foxbox_taxonomy::services::ChannelKind'>ChannelKind</a></code></h3><div class='impl-items'><h4 id='method.description' class='method'><code>fn <a href='../../foxbox_taxonomy/parse/trait.Parser.html#method.description' class='fnname'>description</a>() -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a></code></h4>
+<h4 id='method.parse' class='method'><code>fn <a href='../../foxbox_taxonomy/parse/trait.Parser.html#method.parse' class='fnname'>parse</a>(path: <a class='struct' href='../../foxbox_taxonomy/parse/struct.Path.html' title='foxbox_taxonomy::parse::Path'>Path</a>, source: &amp;mut <a class='enum' href='../../foxbox_taxonomy/parse/enum.JSON.html' title='foxbox_taxonomy::parse::JSON'>JSON</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;Self, <a class='enum' href='../../foxbox_taxonomy/parse/enum.ParseError.html' title='foxbox_taxonomy::parse::ParseError'>ParseError</a>&gt;</code></h4>
+<h4 id='method.from_str' class='method'><code>fn <a href='../../foxbox_taxonomy/parse/trait.Parser.html#method.from_str' class='fnname'>from_str</a>(source: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;T, <a class='enum' href='../../foxbox_taxonomy/parse/enum.ParseError.html' title='foxbox_taxonomy::parse::ParseError'>ParseError</a>&gt;</code></h4>
+<h4 id='method.take' class='method'><code>fn <a href='../../foxbox_taxonomy/parse/trait.Parser.html#method.take' class='fnname'>take</a>(path: <a class='struct' href='../../foxbox_taxonomy/parse/struct.Path.html' title='foxbox_taxonomy::parse::Path'>Path</a>, source: &amp;mut <a class='enum' href='../../foxbox_taxonomy/parse/enum.JSON.html' title='foxbox_taxonomy::parse::JSON'>JSON</a>, field_name: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;T, <a class='enum' href='../../foxbox_taxonomy/parse/enum.ParseError.html' title='foxbox_taxonomy::parse::ParseError'>ParseError</a>&gt;</code></h4>
+<h4 id='method.take_opt' class='method'><code>fn <a href='../../foxbox_taxonomy/parse/trait.Parser.html#method.take_opt' class='fnname'>take_opt</a>(path: <a class='struct' href='../../foxbox_taxonomy/parse/struct.Path.html' title='foxbox_taxonomy::parse::Path'>Path</a>, source: &amp;mut <a class='enum' href='../../foxbox_taxonomy/parse/enum.JSON.html' title='foxbox_taxonomy::parse::JSON'>JSON</a>, field_name: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;T, <a class='enum' href='../../foxbox_taxonomy/parse/enum.ParseError.html' title='foxbox_taxonomy::parse::ParseError'>ParseError</a>&gt;&gt;</code></h4>
+<h4 id='method.take_vec_opt' class='method'><code>fn <a href='../../foxbox_taxonomy/parse/trait.Parser.html#method.take_vec_opt' class='fnname'>take_vec_opt</a>(path: <a class='struct' href='../../foxbox_taxonomy/parse/struct.Path.html' title='foxbox_taxonomy::parse::Path'>Path</a>, source: &amp;mut <a class='enum' href='../../foxbox_taxonomy/parse/enum.JSON.html' title='foxbox_taxonomy::parse::JSON'>JSON</a>, field_name: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;T&gt;, <a class='enum' href='../../foxbox_taxonomy/parse/enum.ParseError.html' title='foxbox_taxonomy::parse::ParseError'>ParseError</a>&gt;&gt;</code></h4>
+<h4 id='method.take_vec' class='method'><code>fn <a href='../../foxbox_taxonomy/parse/trait.Parser.html#method.take_vec' class='fnname'>take_vec</a>(path: <a class='struct' href='../../foxbox_taxonomy/parse/struct.Path.html' title='foxbox_taxonomy::parse::Path'>Path</a>, source: &amp;mut <a class='enum' href='../../foxbox_taxonomy/parse/enum.JSON.html' title='foxbox_taxonomy::parse::JSON'>JSON</a>, field_name: &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;T&gt;, <a class='enum' href='../../foxbox_taxonomy/parse/enum.ParseError.html' title='foxbox_taxonomy::parse::ParseError'>ParseError</a>&gt;</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='../../foxbox_taxonomy/serialize/trait.ToJSON.html' title='foxbox_taxonomy::serialize::ToJSON'>ToJSON</a> for <a class='enum' href='../../foxbox_taxonomy/services/enum.ChannelKind.html' title='foxbox_taxonomy::services::ChannelKind'>ChannelKind</a></code></h3><div class='impl-items'><h4 id='method.to_json' class='method'><code>fn <a href='../../foxbox_taxonomy/serialize/trait.ToJSON.html#method.to_json' class='fnname'>to_json</a>(&amp;self, parts: &amp;mut <a class='trait' href='../../foxbox_taxonomy/serialize/trait.BinaryParts.html' title='foxbox_taxonomy::serialize::BinaryParts'>BinaryParts</a>) -&gt; <a class='enum' href='../../foxbox_taxonomy/parse/enum.JSON.html' title='foxbox_taxonomy::parse::JSON'>JSON</a></code></h4>
+</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html' title='core::cmp::PartialEq'>PartialEq</a> for <a class='enum' href='../../foxbox_taxonomy/services/enum.ChannelKind.html' title='foxbox_taxonomy::services::ChannelKind'>ChannelKind</a></code></h3><div class='impl-items'><h4 id='method.eq' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.eq' class='fnname'>eq</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../../foxbox_taxonomy/services/enum.ChannelKind.html' title='foxbox_taxonomy::services::ChannelKind'>ChannelKind</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+<h4 id='method.ne' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/cmp/trait.PartialEq.html#method.ne' class='fnname'>ne</a>(&amp;self, __arg_0: &amp;<a class='enum' href='../../foxbox_taxonomy/services/enum.ChannelKind.html' title='foxbox_taxonomy::services::ChannelKind'>ChannelKind</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.bool.html'>bool</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='enum' href='../../foxbox_taxonomy/services/enum.ChannelKind.html' title='foxbox_taxonomy::services::ChannelKind'>ChannelKind</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../../foxbox_taxonomy/services/enum.ChannelKind.html' title='foxbox_taxonomy::services::ChannelKind'>ChannelKind</a></code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../../foxbox_taxonomy/services/enum.ChannelKind.html' title='foxbox_taxonomy::services::ChannelKind'>ChannelKind</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "foxbox_taxonomy";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

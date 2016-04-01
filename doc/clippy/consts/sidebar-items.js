@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Constant","a Lit_-like enum to fold constant `Expr`s into"],["FloatWidth",""],["Sign",""]],"fn":[["constant",""],["constant_simple",""]]});

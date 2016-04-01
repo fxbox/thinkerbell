@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["FakeEnvEvent","Events of interest, that should be displayed to the user of the simulator."],["Instruction","Instructions given to the simulator by the user."]],"struct":[["FakeEnv","The test environment."],["TimerGuard",""]]});

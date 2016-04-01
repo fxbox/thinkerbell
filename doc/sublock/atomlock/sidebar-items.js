@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Liveness",""],["MainLock","A variant of RwLock with sublocks that can be opened for reading iff the main lock is currently opened for reading, opened for writing iff the main lock is currently opened for writing."],["SubCell",""],["WriteGuard",""]],"type":[["LockResult",""],["ReadGuard",""]]});

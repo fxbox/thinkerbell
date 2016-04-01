@@ -1,0 +1,1 @@
+initSidebarItems({"mod":[["api","Public-facing API"],["devices","Metadata on devices This module defines the metadata on devices and services."],["selector","Selecting one or more devices. Exposed through the API."],["util","Various utilities"],["values","Values that may be sent to/received from devices"]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Error","Enum listing possible errors from rusqlite."]],"type":[["SqliteError","Old name for `Error`. `SqliteError` is deprecated."]]});

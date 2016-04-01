@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `InternalError` enum in crate `foxbox_taxonomy`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, InternalError">
+
+    <title>foxbox_taxonomy::api::InternalError - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>foxbox_taxonomy</a>::<wbr><a href='index.html'>api</a></p><script>window.sidebarCurrent = {name: 'InternalError', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content enum">
+<h1 class='fqn'><span class='in-band'>Enum <a href='../index.html'>foxbox_taxonomy</a>::<wbr><a href='index.html'>api</a>::<wbr><a class='enum' href=''>InternalError</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-1204' class='srclink' href='../../src/foxbox_taxonomy/api.rs.html.html#109-138' title='goto source code'>[src]</a></span></h1>
+<pre class='rust enum'>pub enum InternalError {
+    NoSuchGetter(<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;),
+    NoSuchSetter(<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Setter.html' title='foxbox_taxonomy::services::Setter'>Setter</a>&gt;),
+    NoSuchService(<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.ServiceId.html' title='foxbox_taxonomy::util::ServiceId'>ServiceId</a>&gt;),
+    NoSuchAdapter(<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.AdapterId.html' title='foxbox_taxonomy::util::AdapterId'>AdapterId</a>&gt;),
+    DuplicateGetter(<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;),
+    DuplicateSetter(<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Setter.html' title='foxbox_taxonomy::services::Setter'>Setter</a>&gt;),
+    DuplicateService(<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.ServiceId.html' title='foxbox_taxonomy::util::ServiceId'>ServiceId</a>&gt;),
+    DuplicateAdapter(<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.AdapterId.html' title='foxbox_taxonomy::util::AdapterId'>AdapterId</a>&gt;),
+    ConflictingAdapter(<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.AdapterId.html' title='foxbox_taxonomy::util::AdapterId'>AdapterId</a>&gt;, <a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.AdapterId.html' title='foxbox_taxonomy::util::AdapterId'>AdapterId</a>&gt;),
+    GenericError(<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>),
+    InvalidInitialService,
+}</pre><h2 class='variants'>Variants</h2>
+<table class='variants_table'><tr><td id='variant.NoSuchGetter'><code>NoSuchGetter</code></td><td><div class='docblock'><p>Attempting to fetch or watch a getter that isn&#39;t registered.</p>
+</div></td><td></td></tr><tr><td id='variant.NoSuchSetter'><code>NoSuchSetter</code></td><td><div class='docblock'><p>Attempting to send values to a setter that isn&#39;t registered.</p>
+</div></td><td></td></tr><tr><td id='variant.NoSuchService'><code>NoSuchService</code></td><td><div class='docblock'><p>Attempting to access a service that isn&#39;t registered.</p>
+</div></td><td></td></tr><tr><td id='variant.NoSuchAdapter'><code>NoSuchAdapter</code></td><td><div class='docblock'><p>Attempting to access an adapter that isn&#39;t registered.</p>
+</div></td><td></td></tr><tr><td id='variant.DuplicateGetter'><code>DuplicateGetter</code></td><td><div class='docblock'><p>Attempting to register a getter with an id that is already used.</p>
+</div></td><td></td></tr><tr><td id='variant.DuplicateSetter'><code>DuplicateSetter</code></td><td><div class='docblock'><p>Attempting to register a setter with an id that is already used.</p>
+</div></td><td></td></tr><tr><td id='variant.DuplicateService'><code>DuplicateService</code></td><td><div class='docblock'><p>Attempting to register a service with an id that is already used.</p>
+</div></td><td></td></tr><tr><td id='variant.DuplicateAdapter'><code>DuplicateAdapter</code></td><td><div class='docblock'><p>Attempting to register an adapter with an id that is already used.</p>
+</div></td><td></td></tr><tr><td id='variant.ConflictingAdapter'><code>ConflictingAdapter</code></td><td><div class='docblock'><p>Attempting to register a channel with an adapter that doesn&#39;t match that of its service.</p>
+</div></td><td></td></tr><tr><td id='variant.GenericError'><code>GenericError</code></td><td><div class='docblock'><p>Open question: Individual adapters will have errors of many adapter-specific types.
+How do we make this best represent those?</p>
+</div></td><td></td></tr><tr><td id='variant.InvalidInitialService'><code>InvalidInitialService</code></td><td><div class='docblock'><p>Attempting to register a service in an invalid initial state. Typically, a service that
+pretends that it already has channels.</p>
+</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../serde/ser/trait.Serialize.html' title='serde::ser::Serialize'>Serialize</a> for <a class='enum' href='../../foxbox_taxonomy/api/enum.InternalError.html' title='foxbox_taxonomy::api::InternalError'>InternalError</a></code></h3><div class='impl-items'><h4 id='method.serialize' class='method'><code>fn <a href='../../serde/ser/trait.Serialize.html#method.serialize' class='fnname'>serialize</a>&lt;__S&gt;(&amp;self, serializer: &amp;mut __S) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, __S::Error&gt; <span class='where'>where __S: <a class='trait' href='../../serde/ser/trait.Serializer.html' title='serde::ser::Serializer'>Serializer</a></span></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='../../serde/de/trait.Deserialize.html' title='serde::de::Deserialize'>Deserialize</a> for <a class='enum' href='../../foxbox_taxonomy/api/enum.InternalError.html' title='foxbox_taxonomy::api::InternalError'>InternalError</a></code></h3><div class='impl-items'><h4 id='method.deserialize' class='method'><code>fn <a href='../../serde/de/trait.Deserialize.html#method.deserialize' class='fnname'>deserialize</a>&lt;__D&gt;(deserializer: &amp;mut __D) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='enum' href='../../foxbox_taxonomy/api/enum.InternalError.html' title='foxbox_taxonomy::api::InternalError'>InternalError</a>, __D::Error&gt; <span class='where'>where __D: <a class='trait' href='../../serde/de/trait.Deserializer.html' title='serde::de::Deserializer'>Deserializer</a></span></code></h4>
+</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='enum' href='../../foxbox_taxonomy/api/enum.InternalError.html' title='foxbox_taxonomy::api::InternalError'>InternalError</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../../foxbox_taxonomy/api/enum.InternalError.html' title='foxbox_taxonomy::api::InternalError'>InternalError</a></code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../../foxbox_taxonomy/api/enum.InternalError.html' title='foxbox_taxonomy::api::InternalError'>InternalError</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "foxbox_taxonomy";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

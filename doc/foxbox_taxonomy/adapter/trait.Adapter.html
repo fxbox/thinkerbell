@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Adapter` trait in crate `foxbox_taxonomy`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Adapter">
+
+    <title>foxbox_taxonomy::adapter::Adapter - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>foxbox_taxonomy</a>::<wbr><a href='index.html'>adapter</a></p><script>window.sidebarCurrent = {name: 'Adapter', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content trait">
+<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>foxbox_taxonomy</a>::<wbr><a href='index.html'>adapter</a>::<wbr><a class='trait' href=''>Adapter</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-6845' class='srclink' href='../../src/foxbox_taxonomy/adapter.rs.html.html#139-190' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait Adapter: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Sync.html' title='core::marker::Sync'>Sync</a> {
+    fn <a href='#tymethod.id' class='fnname'>id</a>(&amp;self) -&gt; <a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.AdapterId.html' title='foxbox_taxonomy::util::AdapterId'>AdapterId</a>&gt;;
+    fn <a href='#tymethod.name' class='fnname'>name</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>;
+    fn <a href='#tymethod.vendor' class='fnname'>vendor</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a>;
+    fn <a href='#tymethod.version' class='fnname'>version</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 4]</a>;
+    fn <a href='#tymethod.fetch_values' class='fnname'>fetch_values</a>(&amp;self, set: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;&gt;, user: <a class='enum' href='../../foxbox_taxonomy/api/enum.User.html' title='foxbox_taxonomy::api::User'>User</a>) -&gt; <a class='type' href='../../foxbox_taxonomy/adapter/type.ResultMap.html' title='foxbox_taxonomy::adapter::ResultMap'>ResultMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;, <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='../../foxbox_taxonomy/values/enum.Value.html' title='foxbox_taxonomy::values::Value'>Value</a>&gt;, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;;
+    fn <a href='#tymethod.send_values' class='fnname'>send_values</a>(&amp;self, values: <a class='struct' href='https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html' title='std::collections::hash::map::HashMap'>HashMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Setter.html' title='foxbox_taxonomy::services::Setter'>Setter</a>&gt;, <a class='enum' href='../../foxbox_taxonomy/values/enum.Value.html' title='foxbox_taxonomy::values::Value'>Value</a>&gt;, user: <a class='enum' href='../../foxbox_taxonomy/api/enum.User.html' title='foxbox_taxonomy::api::User'>User</a>) -&gt; <a class='type' href='../../foxbox_taxonomy/adapter/type.ResultMap.html' title='foxbox_taxonomy::adapter::ResultMap'>ResultMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Setter.html' title='foxbox_taxonomy::services::Setter'>Setter</a>&gt;, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;;
+    fn <a href='#tymethod.register_watch' class='fnname'>register_watch</a>(&amp;self, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;, <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='../../foxbox_taxonomy/values/enum.Range.html' title='foxbox_taxonomy::values::Range'>Range</a>&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;, cb: <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../transformable_channels/mpsc/trait.ExtSender.html' title='transformable_channels::mpsc::ExtSender'>ExtSender</a>&lt;<a class='enum' href='../../foxbox_taxonomy/adapter/enum.WatchEvent.html' title='foxbox_taxonomy::adapter::WatchEvent'>WatchEvent</a>&gt;&gt;) -&gt; <a class='type' href='../../foxbox_taxonomy/adapter/type.ResultMap.html' title='foxbox_taxonomy::adapter::ResultMap'>ResultMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;, <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../foxbox_taxonomy/adapter/trait.AdapterWatchGuard.html' title='foxbox_taxonomy::adapter::AdapterWatchGuard'>AdapterWatchGuard</a>&gt;, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;;
+}</pre><div class='docblock'><p>API that adapters must implement.</p>
+
+<h1 id='requirements' class='section-header'><a href='#requirements'>Requirements</a></h1>
+<p>Channels and Services are expected to have a stable id, which persists between reboots
+and { dis, re }connections.</p>
+
+<p>Note that all methods are blocking. However, the underlying implementatino of adapters is
+expected to either return quickly or be able to handle several requests concurrently.</p>
+</div>
+            <h2 id='required-methods'>Required Methods</h2>
+            <div class='methods'>
+        <h3 id='tymethod.id' class='method stab '><code>fn <a href='#tymethod.id' class='fnname'>id</a>(&amp;self) -&gt; <a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.AdapterId.html' title='foxbox_taxonomy::util::AdapterId'>AdapterId</a>&gt;</code></h3><div class='docblock'><p>An id unique to this adapter. This id must persist between
+reboots/reconnections.</p>
+</div><h3 id='tymethod.name' class='method stab '><code>fn <a href='#tymethod.name' class='fnname'>name</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h3><div class='docblock'><p>The name of the adapter.</p>
+</div><h3 id='tymethod.vendor' class='method stab '><code>fn <a href='#tymethod.vendor' class='fnname'>vendor</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h3><h3 id='tymethod.version' class='method stab '><code>fn <a href='#tymethod.version' class='fnname'>version</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>[</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.u32.html'>u32</a><a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.array.html'>; 4]</a></code></h3><h3 id='tymethod.fetch_values' class='method stab '><code>fn <a href='#tymethod.fetch_values' class='fnname'>fetch_values</a>(&amp;self, set: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;&gt;, user: <a class='enum' href='../../foxbox_taxonomy/api/enum.User.html' title='foxbox_taxonomy::api::User'>User</a>) -&gt; <a class='type' href='../../foxbox_taxonomy/adapter/type.ResultMap.html' title='foxbox_taxonomy::adapter::ResultMap'>ResultMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;, <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='../../foxbox_taxonomy/values/enum.Value.html' title='foxbox_taxonomy::values::Value'>Value</a>&gt;, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Request values from a group of channels.</p>
+
+<p>The AdapterManager always attempts to group calls to <code>fetch_values</code> by <code>Adapter</code>, and then
+expects the adapter to attempt to minimize the connections with the actual devices.</p>
+
+<p>The AdapterManager is in charge of keeping track of the age of values.</p>
+</div><h3 id='tymethod.send_values' class='method stab '><code>fn <a href='#tymethod.send_values' class='fnname'>send_values</a>(&amp;self, values: <a class='struct' href='https://doc.rust-lang.org/nightly/std/collections/hash/map/struct.HashMap.html' title='std::collections::hash::map::HashMap'>HashMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Setter.html' title='foxbox_taxonomy::services::Setter'>Setter</a>&gt;, <a class='enum' href='../../foxbox_taxonomy/values/enum.Value.html' title='foxbox_taxonomy::values::Value'>Value</a>&gt;, user: <a class='enum' href='../../foxbox_taxonomy/api/enum.User.html' title='foxbox_taxonomy::api::User'>User</a>) -&gt; <a class='type' href='../../foxbox_taxonomy/adapter/type.ResultMap.html' title='foxbox_taxonomy::adapter::ResultMap'>ResultMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Setter.html' title='foxbox_taxonomy::services::Setter'>Setter</a>&gt;, <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Request that values be sent to channels.</p>
+
+<p>The AdapterManager always attempts to group calls to <code>send_values</code> by <code>Adapter</code>, and then
+expects the adapter to attempt to minimize the connections with the actual devices.</p>
+</div><h3 id='tymethod.register_watch' class='method stab '><code>fn <a href='#tymethod.register_watch' class='fnname'>register_watch</a>(&amp;self, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;, <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;<a class='enum' href='../../foxbox_taxonomy/values/enum.Range.html' title='foxbox_taxonomy::values::Range'>Range</a>&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;, cb: <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../transformable_channels/mpsc/trait.ExtSender.html' title='transformable_channels::mpsc::ExtSender'>ExtSender</a>&lt;<a class='enum' href='../../foxbox_taxonomy/adapter/enum.WatchEvent.html' title='foxbox_taxonomy::adapter::WatchEvent'>WatchEvent</a>&gt;&gt;) -&gt; <a class='type' href='../../foxbox_taxonomy/adapter/type.ResultMap.html' title='foxbox_taxonomy::adapter::ResultMap'>ResultMap</a>&lt;<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;, <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='../../foxbox_taxonomy/adapter/trait.AdapterWatchGuard.html' title='foxbox_taxonomy::adapter::AdapterWatchGuard'>AdapterWatchGuard</a>&gt;, <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>&gt;</code></h3><div class='docblock'><p>Watch a bunch of getters as they change.</p>
+
+<p>The <code>AdapterManager</code> always attempts to group calls to <code>fetch_values</code> by <code>Adapter</code>, and
+then expects the adapter to attempt to minimize the connections with the actual devices.
+The Adapter should however be ready to handle concurrent <code>register_watch</code> on the same
+devices, possibly with distinct <code>Option&lt;Range&gt;</code> options.</p>
+
+<p>If a <code>Range</code> option is set, the watcher expects to receive <code>EnterRange</code>/<code>ExitRange</code> events
+whenever the value available on the device enters/exits the range. If the <code>Range</code> is
+a <code>Range::Eq(x)</code>, the adapter may decide to reject the request or to interpret it as
+a <code>Range::BetweenEq { min: x, max: x }</code>.</p>
+
+<p>If no <code>Range</code> option is set, the watcher expects to receive <code>EnterRange</code> events whenever
+a new value is available on the device. The adapter may decide to reject the request if
+this is clearly not the expected usage for a device, or to throttle it.</p>
+
+<h1 id='edge-cases' class='section-header'><a href='#edge-cases'>Edge cases</a></h1>
+<p>Note that the same <code>Id&lt;Getter&gt;</code> may appear several times. This is by design and adapters
+should handle this case, optimizing it if possible.</p>
+
+<p>Similarly, successive calls to <code>register_watch</code> may end up watching the same getter. The
+adapter should handle this case, optimizing it if possible.</p>
+</div></div>
+        <h2 id='implementors'>Implementors</h2>
+        <ul class='item-list' id='implementors-list'>
+    <li><code>impl&lt;T&gt; <a class='trait' href='../../foxbox_taxonomy/adapter/trait.Adapter.html' title='foxbox_taxonomy::adapter::Adapter'>Adapter</a> for <a class='struct' href='../../foxbox_taxonomy/adapter_utils/struct.MakeSyncAdapter.html' title='foxbox_taxonomy::adapter_utils::MakeSyncAdapter'>MakeSyncAdapter</a>&lt;T&gt; <span class='where'>where T: <a class='trait' href='../../foxbox_taxonomy/adapter/trait.Adapter.html' title='foxbox_taxonomy::adapter::Adapter'>Adapter</a></span></code></li>
+<li><code>impl <a class='trait' href='../../foxbox_taxonomy/adapter/trait.Adapter.html' title='foxbox_taxonomy::adapter::Adapter'>Adapter</a> for <a class='struct' href='../../foxbox_taxonomy/fake_adapter/struct.FakeAdapter.html' title='foxbox_taxonomy::fake_adapter::FakeAdapter'>FakeAdapter</a></code></li>
+</ul><script type="text/javascript" async
+                              src="../../implementors/foxbox_taxonomy/adapter/trait.Adapter.js">
+                      </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "foxbox_taxonomy";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

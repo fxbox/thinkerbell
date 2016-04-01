@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["Parser","A structure dedicated to parsing scripts from JSON strings."]]});

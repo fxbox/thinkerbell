@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `API` trait in crate `fxbox_taxonomy`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, API">
+
+    <title>fxbox_taxonomy::api::API - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>fxbox_taxonomy</a>::<wbr><a href='index.html'>api</a></p><script>window.sidebarCurrent = {name: 'API', ty: 'trait', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content trait">
+<h1 class='fqn'><span class='in-band'>Trait <a href='../index.html'>fxbox_taxonomy</a>::<wbr><a href='index.html'>api</a>::<wbr><a class='trait' href=''>API</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-1299' class='srclink' href='../../src/fxbox_taxonomy/api.rs.html#61-337' title='goto source code'>[src]</a></span></h1>
+<pre class='rust trait'>pub trait API: <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> {
+    type WatchGuard;
+    fn <a href='#tymethod.get_nodes' class='fnname'>get_nodes</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.NodeSelector.html' title='fxbox_taxonomy::selector::NodeSelector'>NodeSelector</a>&gt;) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/devices/struct.Node.html' title='fxbox_taxonomy::devices::Node'>Node</a>&gt;;
+    fn <a href='#tymethod.put_node_tag' class='fnname'>put_node_tag</a>(&amp;self, set: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.NodeSelector.html' title='fxbox_taxonomy::selector::NodeSelector'>NodeSelector</a>&gt;, tags: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>;
+    fn <a href='#tymethod.delete_node_tag' class='fnname'>delete_node_tag</a>(&amp;self, set: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.NodeSelector.html' title='fxbox_taxonomy::selector::NodeSelector'>NodeSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>;
+    fn <a href='#tymethod.get_input_channels' class='fnname'>get_input_channels</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.GetSelector.html' title='fxbox_taxonomy::selector::GetSelector'>GetSelector</a>&gt;) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/devices/struct.Channel.html' title='fxbox_taxonomy::devices::Channel'>Channel</a>&lt;<a class='struct' href='../../fxbox_taxonomy/devices/struct.Get.html' title='fxbox_taxonomy::devices::Get'>Get</a>&gt;&gt;;
+    fn <a href='#tymethod.get_output_channels' class='fnname'>get_output_channels</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.SetSelector.html' title='fxbox_taxonomy::selector::SetSelector'>SetSelector</a>&gt;) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/devices/struct.Channel.html' title='fxbox_taxonomy::devices::Channel'>Channel</a>&lt;<a class='struct' href='../../fxbox_taxonomy/devices/struct.Set.html' title='fxbox_taxonomy::devices::Set'>Set</a>&gt;&gt;;
+    fn <a href='#tymethod.put_input_tag' class='fnname'>put_input_tag</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.GetSelector.html' title='fxbox_taxonomy::selector::GetSelector'>GetSelector</a>&gt;, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>;
+    fn <a href='#tymethod.put_output_tag' class='fnname'>put_output_tag</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.SetSelector.html' title='fxbox_taxonomy::selector::SetSelector'>SetSelector</a>&gt;, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>;
+    fn <a href='#tymethod.delete_input_tag' class='fnname'>delete_input_tag</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.GetSelector.html' title='fxbox_taxonomy::selector::GetSelector'>GetSelector</a>&gt;, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>;
+    fn <a href='#tymethod.delete_output_tag' class='fnname'>delete_output_tag</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.GetSelector.html' title='fxbox_taxonomy::selector::GetSelector'>GetSelector</a>&gt;, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a>;
+    fn <a href='#tymethod.get_channel_value' class='fnname'>get_channel_value</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.GetSelector.html' title='fxbox_taxonomy::selector::GetSelector'>GetSelector</a>&gt;) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='struct' href='../../fxbox_taxonomy/util/struct.Id.html' title='fxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../fxbox_taxonomy/devices/struct.Get.html' title='fxbox_taxonomy::devices::Get'>Get</a>&gt;, <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='enum' href='../../fxbox_taxonomy/values/enum.Value.html' title='fxbox_taxonomy::values::Value'>Value</a>, <a class='enum' href='../../fxbox_taxonomy/api/enum.Error.html' title='fxbox_taxonomy::api::Error'>Error</a>&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;;
+    fn <a href='#tymethod.put_channel_value' class='fnname'>put_channel_value</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.SetSelector.html' title='fxbox_taxonomy::selector::SetSelector'>SetSelector</a>&gt;, <a class='enum' href='../../fxbox_taxonomy/values/enum.Value.html' title='fxbox_taxonomy::values::Value'>Value</a>) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='struct' href='../../fxbox_taxonomy/util/struct.Id.html' title='fxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../fxbox_taxonomy/devices/struct.Set.html' title='fxbox_taxonomy::devices::Set'>Set</a>&gt;, <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../fxbox_taxonomy/api/enum.Error.html' title='fxbox_taxonomy::api::Error'>Error</a>&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;;
+    fn <a href='#tymethod.register_channel_watch' class='fnname'>register_channel_watch</a>(&amp;self, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/api/struct.WatchOptions.html' title='fxbox_taxonomy::api::WatchOptions'>WatchOptions</a>&gt;, cb: <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Fn.html' title='core::ops::Fn'>Fn</a>(<a class='enum' href='../../fxbox_taxonomy/api/enum.WatchEvent.html' title='fxbox_taxonomy::api::WatchEvent'>WatchEvent</a>) + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + 'static&gt;) -&gt; Self::<a class='trait' href='../../fxbox_taxonomy/api/trait.API.html' title='fxbox_taxonomy::api::API'>WatchGuard</a>;
+}</pre><div class='docblock'><p>A handle to the public API.</p>
+</div>
+            <h2 id='associated-types'>Associated Types</h2>
+            <div class='methods'>
+        <h3 id='associatedtype.WatchGuard' class='method stab '><code>type WatchGuard</code></h3><div class='docblock'><p>A value that causes a disconnection once it is dropped.</p>
+</div></div>
+            <h2 id='required-methods'>Required Methods</h2>
+            <div class='methods'>
+        <h3 id='tymethod.get_nodes' class='method stab '><code>fn <a href='#tymethod.get_nodes' class='fnname'>get_nodes</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.NodeSelector.html' title='fxbox_taxonomy::selector::NodeSelector'>NodeSelector</a>&gt;) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/devices/struct.Node.html' title='fxbox_taxonomy::devices::Node'>Node</a>&gt;</code></h3><div class='docblock'><p>Get the metadata on nodes matching some conditions.</p>
+
+<p>A call to <code>API::get_nodes(vec![req1, req2, ...])</code> will return
+the metadata on all nodes matching <em>either</em> <code>req1</code> or <code>req2</code>
+or ...</p>
+
+<h1 id='rest-api' class='section-header'><a href='#rest-api'>REST API</a></h1>
+<p><code>GET /api/v1/nodes</code></p>
+
+<h2 id='gets' class='section-header'><a href='#gets'>Gets</a></h2>
+<p>Any JSON that can be deserialized to a <code>Vec&lt;NodeSelector&gt;</code>. See
+the implementation of <code>NodeSelector</code> for details.</p>
+
+<h3 id='example' class='section-header'><a href='#example'>Example</a></h3>
+<p>Selector all doors in the entrance (tags <code>door</code>, <code>entrance</code>)
+that support output channel <code>OpenClose</code></p>
+
+<pre><code class="language-json">[{
+  &quot;tags&quot;: [&quot;entrance&quot;, &quot;door&quot;],
+  &quot;inputs&quot;: [
+    {
+      &quot;kind&quot;: {
+        &quot;Exactly&quot;: {
+          &quot;OpenClose&quot;: []
+        }
+      }
+    }
+  ]
+}]
+</code></pre>
+
+<h2 id='errors' class='section-header'><a href='#errors'>Errors</a></h2>
+<p>In case of syntax error, Error 400, accompanied with a
+somewhat human-readable JSON string detailing the error.</p>
+
+<h2 id='success' class='section-header'><a href='#success'>Success</a></h2>
+<p>A JSON representing an array of <code>Node</code>. See the implementation
+of <code>Node</code> for details.</p>
+
+<h3 id='example-1' class='section-header'><a href='#example-1'>Example</a></h3>
+<pre><code class="language-json">[{
+  &quot;tags&quot;: [&quot;entrance&quot;, &quot;door&quot;, &quot;somevendor&quot;],
+  &quot;id: &quot;some-node-id&quot;,
+  &quot;inputs&quot;: [],
+  &quot;outputs&quot;: [
+    &quot;tags&quot;: [...],
+    &quot;id&quot;: &quot;some-channel-id&quot;,
+    &quot;node&quot;: &quot;some-node-id&quot;,
+    &quot;last_seen&quot;: &quot;some-date&quot;,
+    &quot;mechanism&quot;: {
+      &quot;Set&quot;:  {
+        &quot;kind&quot;: {
+          &quot;OnOff&quot;: []
+        },
+        &quot;push&quot;: [5000],
+        &quot;updated&quot;: &quot;some-date&quot;,
+      }
+    }
+  ]
+}]
+</code></pre>
+</div><h3 id='tymethod.put_node_tag' class='method stab '><code>fn <a href='#tymethod.put_node_tag' class='fnname'>put_node_tag</a>(&amp;self, set: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.NodeSelector.html' title='fxbox_taxonomy::selector::NodeSelector'>NodeSelector</a>&gt;, tags: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h3><div class='docblock'><p>Label a set of nodes with a set of tags.</p>
+
+<p>A call to <code>API::put_node_tag(vec![req1, req2, ...], vec![tag1, ...])</code> will label all the nodes matching <em>either</em> <code>req1</code> or
+<code>req2</code> or ... with <code>tag1</code>, ... and return the number of nodes
+matching any of the selectors.</p>
+
+<p>Some of the nodes may already be labelled with <code>tag1</code>, or
+<code>tag2</code>, ... They will not change state. They are counted in
+the resulting <code>usize</code> nevertheless.</p>
+
+<p>Note that this call is <em>not live</em>. In other words, if nodes
+are added after the call, they will not be affected.</p>
+
+<h1 id='rest-api-1' class='section-header'><a href='#rest-api-1'>REST API</a></h1>
+<p><code>POST /api/v1/nodes/tag</code></p>
+
+<h2 id='gets-1' class='section-header'><a href='#gets-1'>Gets</a></h2>
+<p>Any JSON that can be deserialized to</p>
+
+<pre class='rust rust-example-rendered'>
+{
+  <span class='ident'>set</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>NodeSelector</span><span class='op'>&gt;</span>,
+  <span class='ident'>tags</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>,
+}</pre>
+
+<h2 id='errors-1' class='section-header'><a href='#errors-1'>Errors</a></h2>
+<p>In case of syntax error, Error 400, accompanied with a
+somewhat human-readable JSON string detailing the error.</p>
+
+<h2 id='success-1' class='section-header'><a href='#success-1'>Success</a></h2>
+<p>A JSON string representing a number.</p>
+</div><h3 id='tymethod.delete_node_tag' class='method stab '><code>fn <a href='#tymethod.delete_node_tag' class='fnname'>delete_node_tag</a>(&amp;self, set: &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.NodeSelector.html' title='fxbox_taxonomy::selector::NodeSelector'>NodeSelector</a>&gt;, tags: <a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h3><div class='docblock'><p>Remove a set of tags from a set of nodes.</p>
+
+<p>A call to <code>API::delete_node_tag(vec![req1, req2, ...], vec![tag1, ...])</code> will remove from all the nodes matching <em>either</em> <code>req1</code> or
+<code>req2</code> or ... all of the tags <code>tag1</code>, ... and return the number of nodes
+matching any of the selectors.</p>
+
+<p>Some of the nodes may not be labelled with <code>tag1</code>, or <code>tag2</code>,
+... They will not change state. They are counted in the
+resulting <code>usize</code> nevertheless.</p>
+
+<p>Note that this call is <em>not live</em>. In other words, if nodes
+are added after the call, they will not be affected.</p>
+
+<h1 id='rest-api-2' class='section-header'><a href='#rest-api-2'>REST API</a></h1>
+<p><code>DELETE /api/v1/nodes/tag</code></p>
+
+<h2 id='gets-2' class='section-header'><a href='#gets-2'>Gets</a></h2>
+<p>Any JSON that can be deserialized to</p>
+
+<pre class='rust rust-example-rendered'>
+{
+  <span class='ident'>set</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>NodeSelector</span><span class='op'>&gt;</span>,
+  <span class='ident'>tags</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>,
+}</pre>
+
+<h2 id='errors-2' class='section-header'><a href='#errors-2'>Errors</a></h2>
+<p>In case of syntax error, Error 400, accompanied with a
+somewhat human-readable JSON string detailing the error.</p>
+
+<h2 id='success-2' class='section-header'><a href='#success-2'>Success</a></h2>
+<p>A JSON representing a number.</p>
+</div><h3 id='tymethod.get_input_channels' class='method stab '><code>fn <a href='#tymethod.get_input_channels' class='fnname'>get_input_channels</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.GetSelector.html' title='fxbox_taxonomy::selector::GetSelector'>GetSelector</a>&gt;) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/devices/struct.Channel.html' title='fxbox_taxonomy::devices::Channel'>Channel</a>&lt;<a class='struct' href='../../fxbox_taxonomy/devices/struct.Get.html' title='fxbox_taxonomy::devices::Get'>Get</a>&gt;&gt;</code></h3><div class='docblock'><p>Get a list of inputs matching some conditions</p>
+
+<h1 id='rest-api-3' class='section-header'><a href='#rest-api-3'>REST API</a></h1>
+<p><code>GET /api/v1/channels</code></p>
+</div><h3 id='tymethod.get_output_channels' class='method stab '><code>fn <a href='#tymethod.get_output_channels' class='fnname'>get_output_channels</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.SetSelector.html' title='fxbox_taxonomy::selector::SetSelector'>SetSelector</a>&gt;) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/devices/struct.Channel.html' title='fxbox_taxonomy::devices::Channel'>Channel</a>&lt;<a class='struct' href='../../fxbox_taxonomy/devices/struct.Set.html' title='fxbox_taxonomy::devices::Set'>Set</a>&gt;&gt;</code></h3><h3 id='tymethod.put_input_tag' class='method stab '><code>fn <a href='#tymethod.put_input_tag' class='fnname'>put_input_tag</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.GetSelector.html' title='fxbox_taxonomy::selector::GetSelector'>GetSelector</a>&gt;, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h3><div class='docblock'><p>Label a set of channels with a set of tags.</p>
+
+<p>A call to <code>API::put_{input, output}_tag(vec![req1, req2, ...], vec![tag1, ...])</code> will label all the channels matching <em>either</em> <code>req1</code> or
+<code>req2</code> or ... with <code>tag1</code>, ... and return the number of channels
+matching any of the selectors.</p>
+
+<p>Some of the channels may already be labelled with <code>tag1</code>, or
+<code>tag2</code>, ... They will not change state. They are counted in
+the resulting <code>usize</code> nevertheless.</p>
+
+<p>Note that this call is <em>not live</em>. In other words, if channels
+are added after the call, they will not be affected.</p>
+
+<h1 id='rest-api-4' class='section-header'><a href='#rest-api-4'>REST API</a></h1>
+<p><code>POST /api/v1/channels/tag</code></p>
+
+<h2 id='gets-3' class='section-header'><a href='#gets-3'>Gets</a></h2>
+<p>Any JSON that can be deserialized to</p>
+
+<pre class='rust rust-example-rendered'>
+{
+  <span class='ident'>set</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>GetSelector</span><span class='op'>&gt;</span>,
+  <span class='ident'>tags</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>,
+}</pre>
+
+<p>or
+<code>ignore { set: Vec&lt;SetSelector&gt;, tags: Vec&lt;String&gt;, }</code></p>
+
+<h2 id='errors-3' class='section-header'><a href='#errors-3'>Errors</a></h2>
+<p>In case of syntax error, Error 400, accompanied with a
+somewhat human-readable JSON string detailing the error.</p>
+
+<h2 id='success-3' class='section-header'><a href='#success-3'>Success</a></h2>
+<p>A JSON representing a number.</p>
+</div><h3 id='tymethod.put_output_tag' class='method stab '><code>fn <a href='#tymethod.put_output_tag' class='fnname'>put_output_tag</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.SetSelector.html' title='fxbox_taxonomy::selector::SetSelector'>SetSelector</a>&gt;, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h3><h3 id='tymethod.delete_input_tag' class='method stab '><code>fn <a href='#tymethod.delete_input_tag' class='fnname'>delete_input_tag</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.GetSelector.html' title='fxbox_taxonomy::selector::GetSelector'>GetSelector</a>&gt;, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h3><div class='docblock'><p>Remove a set of tags from a set of channels.</p>
+
+<p>A call to <code>API::delete_{input, output}_tag(vec![req1, req2, ...], vec![tag1, ...])</code> will remove from all the channels matching <em>either</em> <code>req1</code> or
+<code>req2</code> or ... all of the tags <code>tag1</code>, ... and return the number of channels
+matching any of the selectors.</p>
+
+<p>Some of the channels may not be labelled with <code>tag1</code>, or <code>tag2</code>,
+... They will not change state. They are counted in the
+resulting <code>usize</code> nevertheless.</p>
+
+<p>Note that this call is <em>not live</em>. In other words, if channels
+are added after the call, they will not be affected.</p>
+
+<h1 id='rest-api-5' class='section-header'><a href='#rest-api-5'>REST API</a></h1>
+<p><code>DELETE /api/v1/channels/tag</code></p>
+
+<h2 id='gets-4' class='section-header'><a href='#gets-4'>Gets</a></h2>
+<p>Any JSON that can be deserialized to</p>
+
+<pre class='rust rust-example-rendered'>
+{
+  <span class='ident'>set</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>GetSelector</span><span class='op'>&gt;</span>,
+  <span class='ident'>tags</span>: <span class='ident'>Vec</span><span class='op'>&lt;</span><span class='ident'>String</span><span class='op'>&gt;</span>,
+}</pre>
+
+<p>or
+<code>ignore { set: Vec&lt;SetSelector&gt;, tags: Vec&lt;String&gt;, }</code></p>
+
+<h2 id='errors-4' class='section-header'><a href='#errors-4'>Errors</a></h2>
+<p>In case of syntax error, Error 400, accompanied with a
+somewhat human-readable JSON string detailing the error.</p>
+
+<h2 id='success-4' class='section-header'><a href='#success-4'>Success</a></h2>
+<p>A JSON representing a number.</p>
+</div><h3 id='tymethod.delete_output_tag' class='method stab '><code>fn <a href='#tymethod.delete_output_tag' class='fnname'>delete_output_tag</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.GetSelector.html' title='fxbox_taxonomy::selector::GetSelector'>GetSelector</a>&gt;, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/string/struct.String.html' title='collections::string::String'>String</a>&gt;) -&gt; <a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.usize.html'>usize</a></code></h3><h3 id='tymethod.get_channel_value' class='method stab '><code>fn <a href='#tymethod.get_channel_value' class='fnname'>get_channel_value</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.GetSelector.html' title='fxbox_taxonomy::selector::GetSelector'>GetSelector</a>&gt;) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='struct' href='../../fxbox_taxonomy/util/struct.Id.html' title='fxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../fxbox_taxonomy/devices/struct.Get.html' title='fxbox_taxonomy::devices::Get'>Get</a>&gt;, <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='enum' href='../../fxbox_taxonomy/values/enum.Value.html' title='fxbox_taxonomy::values::Value'>Value</a>, <a class='enum' href='../../fxbox_taxonomy/api/enum.Error.html' title='fxbox_taxonomy::api::Error'>Error</a>&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;</code></h3><div class='docblock'><p>Read the latest value from a set of channels</p>
+
+<h1 id='rest-api-6' class='section-header'><a href='#rest-api-6'>REST API</a></h1>
+<p><code>GET /api/v1/channels/value</code></p>
+</div><h3 id='tymethod.put_channel_value' class='method stab '><code>fn <a href='#tymethod.put_channel_value' class='fnname'>put_channel_value</a>(&amp;self, &amp;<a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/selector/struct.SetSelector.html' title='fxbox_taxonomy::selector::SetSelector'>SetSelector</a>&gt;, <a class='enum' href='../../fxbox_taxonomy/values/enum.Value.html' title='fxbox_taxonomy::values::Value'>Value</a>) -&gt; <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>(</a><a class='struct' href='../../fxbox_taxonomy/util/struct.Id.html' title='fxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../fxbox_taxonomy/devices/struct.Set.html' title='fxbox_taxonomy::devices::Set'>Set</a>&gt;, <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, <a class='enum' href='../../fxbox_taxonomy/api/enum.Error.html' title='fxbox_taxonomy::api::Error'>Error</a>&gt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>)</a>&gt;</code></h3><div class='docblock'><p>Send one value to a set of channels</p>
+
+<h1 id='rest-api-7' class='section-header'><a href='#rest-api-7'>REST API</a></h1>
+<p><code>POST /api/v1/channels/value</code></p>
+</div><h3 id='tymethod.register_channel_watch' class='method stab '><code>fn <a href='#tymethod.register_channel_watch' class='fnname'>register_channel_watch</a>(&amp;self, <a class='struct' href='https://doc.rust-lang.org/nightly/collections/vec/struct.Vec.html' title='collections::vec::Vec'>Vec</a>&lt;<a class='struct' href='../../fxbox_taxonomy/api/struct.WatchOptions.html' title='fxbox_taxonomy::api::WatchOptions'>WatchOptions</a>&gt;, cb: <a class='struct' href='https://doc.rust-lang.org/nightly/alloc/boxed/struct.Box.html' title='alloc::boxed::Box'>Box</a>&lt;<a class='trait' href='https://doc.rust-lang.org/nightly/core/ops/trait.Fn.html' title='core::ops::Fn'>Fn</a>(<a class='enum' href='../../fxbox_taxonomy/api/enum.WatchEvent.html' title='fxbox_taxonomy::api::WatchEvent'>WatchEvent</a>) + <a class='trait' href='https://doc.rust-lang.org/nightly/core/marker/trait.Send.html' title='core::marker::Send'>Send</a> + 'static&gt;) -&gt; Self::<a class='trait' href='../../fxbox_taxonomy/api/trait.API.html' title='fxbox_taxonomy::api::API'>WatchGuard</a></code></h3><div class='docblock'><p>Watch for any change</p>
+
+<h1 id='websocket-api' class='section-header'><a href='#websocket-api'>WebSocket API</a></h1>
+<p><code>/api/v1/channels/watch</code></p>
+</div></div>
+        <h2 id='implementors'>Implementors</h2>
+        <ul class='item-list' id='implementors-list'>
+    </ul><script type="text/javascript" async
+                              src="../../implementors/fxbox_taxonomy/api/trait.API.js">
+                      </script></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "fxbox_taxonomy";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

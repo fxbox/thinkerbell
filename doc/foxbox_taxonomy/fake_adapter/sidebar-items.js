@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Effect","Something that happened to the virtual device, e.g. a value was sent."],["Tweak","A tweak sent to the virtual device, to set a value, inject an error, ..."]],"struct":[["FakeAdapter",""]]});

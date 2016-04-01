@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="generator" content="rustdoc">
+    <meta name="description" content="API documentation for the Rust `Error` enum in crate `foxbox_taxonomy`.">
+    <meta name="keywords" content="rust, rustlang, rust-lang, Error">
+
+    <title>foxbox_taxonomy::api::Error - Rust</title>
+
+    <link rel="stylesheet" type="text/css" href="../../rustdoc.css">
+    <link rel="stylesheet" type="text/css" href="../../main.css">
+
+    
+    
+</head>
+<body class="rustdoc">
+    <!--[if lte IE 8]>
+    <div class="warning">
+        This old browser is unsupported and will most likely display funky
+        things.
+    </div>
+    <![endif]-->
+
+    
+
+    <nav class="sidebar">
+        
+        <p class='location'><a href='../index.html'>foxbox_taxonomy</a>::<wbr><a href='index.html'>api</a></p><script>window.sidebarCurrent = {name: 'Error', ty: 'enum', relpath: ''};</script><script defer src="sidebar-items.js"></script>
+    </nav>
+
+    <nav class="sub">
+        <form class="search-form js-only">
+            <div class="search-container">
+                <input class="search-input" name="search"
+                       autocomplete="off"
+                       placeholder="Click or press ‘S’ to search, ‘?’ for more options…"
+                       type="search">
+            </div>
+        </form>
+    </nav>
+
+    <section id='main' class="content enum">
+<h1 class='fqn'><span class='in-band'>Enum <a href='../index.html'>foxbox_taxonomy</a>::<wbr><a href='index.html'>api</a>::<wbr><a class='enum' href=''>Error</a></span><span class='out-of-band'><span id='render-detail'>
+            <a id="toggle-all-docs" href="javascript:void(0)" title="collapse all docs">
+                [<span class='inner'>&#x2212;</span>]
+            </a>
+        </span><a id='src-1041' class='srclink' href='../../src/foxbox_taxonomy/api.rs.html.html#33-58' title='goto source code'>[src]</a></span></h1>
+<pre class='rust enum'>pub enum Error {
+    GetterDoesNotSupportPolling(<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;),
+    GetterDoesNotSupportWatching(<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;),
+    GetterRequiresThresholdForWatching(<a class='struct' href='../../foxbox_taxonomy/util/struct.Id.html' title='foxbox_taxonomy::util::Id'>Id</a>&lt;<a class='struct' href='../../foxbox_taxonomy/services/struct.Getter.html' title='foxbox_taxonomy::services::Getter'>Getter</a>&gt;),
+    TypeError(<a class='struct' href='../../foxbox_taxonomy/values/struct.TypeError.html' title='foxbox_taxonomy::values::TypeError'>TypeError</a>),
+    RangeError(<a class='enum' href='../../foxbox_taxonomy/values/enum.Range.html' title='foxbox_taxonomy::values::Range'>Range</a>),
+    InvalidValue(<a class='enum' href='../../foxbox_taxonomy/values/enum.Value.html' title='foxbox_taxonomy::values::Value'>Value</a>),
+    InternalError(<a class='enum' href='../../foxbox_taxonomy/api/enum.InternalError.html' title='foxbox_taxonomy::api::InternalError'>InternalError</a>),
+}</pre><div class='docblock'><p>An error that arose during interaction with either a device, an adapter or the
+adapter manager</p>
+</div><h2 class='variants'>Variants</h2>
+<table class='variants_table'><tr><td id='variant.GetterDoesNotSupportPolling'><code>GetterDoesNotSupportPolling</code></td><td><div class='docblock'><p>Attempting to fetch a value from a Channel<Getter> that doesn&#39;t support this operation.</p>
+</div></td><td></td></tr><tr><td id='variant.GetterDoesNotSupportWatching'><code>GetterDoesNotSupportWatching</code></td><td><div class='docblock'><p>Attempting to watch a value from a Channel<Getter> that doesn&#39;t support this operation.</p>
+</div></td><td></td></tr><tr><td id='variant.GetterRequiresThresholdForWatching'><code>GetterRequiresThresholdForWatching</code></td><td><div class='docblock'><p>Attempting to watch all values from a Channel<Getter> that requires a filter.
+For instance, some Channel<Getter> may be updated 60 times per second. Attempting to
+watch all values could easily exceed the capacity of the network or exhaust the battery.
+In such a case, the adapter should return this error.</p>
+</div></td><td></td></tr><tr><td id='variant.TypeError'><code>TypeError</code></td><td><div class='docblock'><p>Attempting to send a value with a wrong type.</p>
+</div></td><td></td></tr><tr><td id='variant.RangeError'><code>RangeError</code></td><td><div class='docblock'><p>Attempting to use an inconsistent range. For instance, one with <code>min &gt; max</code>.</p>
+</div></td><td></td></tr><tr><td id='variant.InvalidValue'><code>InvalidValue</code></td><td><div class='docblock'><p>Attempting to send an invalid value. For instance, a time of day larger than 24h.</p>
+</div></td><td></td></tr><tr><td id='variant.InternalError'><code>InternalError</code></td><td><div class='docblock'><p>An error internal to the foxbox or an adapter. Normally, these errors should never
+arise from the high-level API.</p>
+</div></td><td></td></tr></table><h2 id='implementations'>Trait Implementations</h2><h3 class='impl'><code>impl <a class='trait' href='../../serde/ser/trait.Serialize.html' title='serde::ser::Serialize'>Serialize</a> for <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a></code></h3><div class='impl-items'><h4 id='method.serialize' class='method'><code>fn <a href='../../serde/ser/trait.Serialize.html#method.serialize' class='fnname'>serialize</a>&lt;__S&gt;(&amp;self, serializer: &amp;mut __S) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.tuple.html'>()</a>, __S::Error&gt; <span class='where'>where __S: <a class='trait' href='../../serde/ser/trait.Serializer.html' title='serde::ser::Serializer'>Serializer</a></span></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='../../serde/de/trait.Deserialize.html' title='serde::de::Deserialize'>Deserialize</a> for <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a></code></h3><div class='impl-items'><h4 id='method.deserialize' class='method'><code>fn <a href='../../serde/de/trait.Deserialize.html#method.deserialize' class='fnname'>deserialize</a>&lt;__D&gt;(deserializer: &amp;mut __D) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/result/enum.Result.html' title='core::result::Result'>Result</a>&lt;<a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a>, __D::Error&gt; <span class='where'>where __D: <a class='trait' href='../../serde/de/trait.Deserializer.html' title='serde::de::Deserializer'>Deserializer</a></span></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='../../foxbox_taxonomy/serialize/trait.ToJSON.html' title='foxbox_taxonomy::serialize::ToJSON'>ToJSON</a> for <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a></code></h3><div class='impl-items'><h4 id='method.to_json' class='method'><code>fn <a href='../../foxbox_taxonomy/serialize/trait.ToJSON.html#method.to_json' class='fnname'>to_json</a>(&amp;self, parts: &amp;mut <a class='trait' href='../../foxbox_taxonomy/serialize/trait.BinaryParts.html' title='foxbox_taxonomy::serialize::BinaryParts'>BinaryParts</a>) -&gt; <a class='enum' href='../../foxbox_taxonomy/parse/enum.JSON.html' title='foxbox_taxonomy::parse::JSON'>JSON</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html' title='core::fmt::Display'>Display</a> for <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a></code></h3><div class='impl-items'><h4 id='method.fmt' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Display.html#method.fmt' class='fnname'>fmt</a>(&amp;self, f: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html' title='std::error::Error'>Error</a> for <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a></code></h3><div class='impl-items'><h4 id='method.description' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html#method.description' class='fnname'>description</a>(&amp;self) -&gt; &amp;<a class='primitive' href='https://doc.rust-lang.org/nightly/std/primitive.str.html'>str</a></code></h4>
+<h4 id='method.cause' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html#method.cause' class='fnname'>cause</a>(&amp;self) -&gt; <a class='enum' href='https://doc.rust-lang.org/nightly/core/option/enum.Option.html' title='core::option::Option'>Option</a>&lt;&amp;<a class='trait' href='https://doc.rust-lang.org/nightly/std/error/trait.Error.html' title='std::error::Error'>Error</a>&gt;</code></h4>
+</div><h3 id='derived_implementations'>Derived Implementations </h3><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html' title='core::clone::Clone'>Clone</a> for <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a></code></h3><div class='impl-items'><h4 id='method.clone' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone' class='fnname'>clone</a>(&amp;self) -&gt; <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a></code></h4>
+<h4 id='method.clone_from' class='method'><span class="since">1.0.0</span><code>fn <a href='https://doc.rust-lang.org/nightly/core/clone/trait.Clone.html#method.clone_from' class='fnname'>clone_from</a>(&amp;mut self, source: &amp;Self)</code></h4>
+</div><h3 class='impl'><code>impl <a class='trait' href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html' title='core::fmt::Debug'>Debug</a> for <a class='enum' href='../../foxbox_taxonomy/api/enum.Error.html' title='foxbox_taxonomy::api::Error'>Error</a></code></h3><div class='impl-items'><h4 id='method.fmt-1' class='method'><code>fn <a href='https://doc.rust-lang.org/nightly/core/fmt/trait.Debug.html#method.fmt' class='fnname'>fmt</a>(&amp;self, __arg_0: &amp;mut <a class='struct' href='https://doc.rust-lang.org/nightly/core/fmt/struct.Formatter.html' title='core::fmt::Formatter'>Formatter</a>) -&gt; <a class='type' href='https://doc.rust-lang.org/nightly/core/fmt/type.Result.html' title='core::fmt::Result'>Result</a></code></h4>
+</div></section>
+    <section id='search' class="content hidden"></section>
+
+    <section class="footer"></section>
+
+    <aside id="help" class="hidden">
+        <div>
+            <h1 class="hidden">Help</h1>
+
+            <div class="shortcuts">
+                <h2>Keyboard Shortcuts</h2>
+
+                <dl>
+                    <dt>?</dt>
+                    <dd>Show this help dialog</dd>
+                    <dt>S</dt>
+                    <dd>Focus the search field</dd>
+                    <dt>&larrb;</dt>
+                    <dd>Move up in search results</dd>
+                    <dt>&rarrb;</dt>
+                    <dd>Move down in search results</dd>
+                    <dt>&#9166;</dt>
+                    <dd>Go to active search result</dd>
+                </dl>
+            </div>
+
+            <div class="infos">
+                <h2>Search Tricks</h2>
+
+                <p>
+                    Prefix searches with a type followed by a colon (e.g.
+                    <code>fn:</code>) to restrict the search to a given type.
+                </p>
+
+                <p>
+                    Accepted types are: <code>fn</code>, <code>mod</code>,
+                    <code>struct</code>, <code>enum</code>,
+                    <code>trait</code>, <code>type</code>, <code>macro</code>,
+                    and <code>const</code>.
+                </p>
+
+                <p>
+                    Search functions by type signature (e.g.
+                    <code>vec -> usize</code> or <code>* -> vec</code>)
+                </p>
+            </div>
+        </div>
+    </aside>
+
+    
+
+    <script>
+        window.rootPath = "../../";
+        window.currentCrate = "foxbox_taxonomy";
+        window.playgroundUrl = "";
+    </script>
+    <script src="../../jquery.js"></script>
+    <script src="../../main.js"></script>
+    
+    <script defer src="../../search-index.js"></script>
+</body>
+</html>

@@ -1,0 +1,1 @@
+initSidebarItems({"struct":[["MakeSyncAdapter","A simple way of converting an Adapter to an Adapter + Sync."]]});

@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Exactly","A marker for a request that a expects a specific value."]],"struct":[["Id","A unique id for values of a given kind."],["Phantom","A variant of `PhantomData` that supports [De]serialization"]]});

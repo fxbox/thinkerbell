@@ -1,0 +1,1 @@
+initSidebarItems({"enum":[["Error",""],["ExecutionEvent",""],["RunningError",""]],"struct":[["Execution","Running and controlling a single script."],["ExecutionTask","A script ready to be executed. Each script is meant to be executed in an individual thread."]]});
